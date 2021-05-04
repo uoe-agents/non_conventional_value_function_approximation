@@ -4,23 +4,20 @@ This project evaluates and compares different approaches to function approximati
 
 ## Getting started
 
-Create a virtual environment:
+Create and activate virtual environment:
 ```
 python3 -m venv [name_of_venv]
-```
-
-Activate virtual environment:
-On Linux
-```
 source [name_of_venv]/bin/activate
 ```
-On Windows
+
+Clone repository:
 ```
-[name_of_venv]\Scripts\activate.bat
+git clone git@github.com:uoe-agents/uoe-rl2021.git
 ```
 
-Setup requirements:
+Install requirements:
 ```
+cd rl_vfa
 pip install -e .
 ```
 
