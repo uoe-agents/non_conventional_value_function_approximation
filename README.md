@@ -12,7 +12,7 @@ source [name_of_venv]/bin/activate
 
 Clone repository:
 ```
-git clone git@github.com:uoe-agents/uoe-rl2021.git
+git clone https://github.com/atsiakkas/rl_vfa.git
 ```
 
 Install requirements:
