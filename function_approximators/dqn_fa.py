@@ -92,7 +92,7 @@ class FCNetwork(nn.Module):
         return self.model(x)
 
     
-    def update(self, target_net):
+    def hard_update(self, target_net):
         for param, target_param in zip(self.parameters(), target_net.parameters()):
             param.data.copy_(target_param.data)
 

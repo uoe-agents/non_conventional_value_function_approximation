@@ -16,14 +16,16 @@ from typing import Dict, Iterable, List
 class DQN_Agent(Agent):
 
     def __init__(
-        action_space,
-        observation_space,
-        learning_rate,
-        hidden_sizes,
-        target_update_freq,
-        batch_size,
-        gamma,
-        epsilon
+        self,
+        action_space: gym.Space,
+        observation_space: gym.Space,
+        learning_rate: float,
+        hidden_size: Iterable[int],
+        target_update_freq: int,
+        batch_size: int,
+        gamma: float,
+        epsilon: float,
+        **kwargs
     ):
 
         super().__init__(action_space, observation_space)
@@ -31,16 +33,16 @@ class DQN_Agent(Agent):
         self.target_update_freq = target_update_freq
         self.gamma = gamma
         self.epsilon = epsilon
+        self.update_counter = 0
 
-        self.model = FCNetwork((observation_space.shape[0], *hidden_sizes, action_space.n))
+        self.model = FCNetwork((observation_space.shape[0], *hidden_size, action_space.n))
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
 
     def schedule_hyperparameters(self, timestep, max_timestep):
         
-        pass
-        # max_deduct, decay = 0.97, 0.1
-        # self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
+        max_deduct, decay = 0.97, 0.1
+        self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
 
     def act(self, obs, explore):
         
@@ -52,6 +54,8 @@ class DQN_Agent(Agent):
             actions = self.model(Tensor(obs))
             # Select the action with the highest action value given the current observations
             action = torch.argmax(actions).item()
+
+        return action
 
     def update(self, batch):
 
