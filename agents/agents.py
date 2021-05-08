@@ -1,6 +1,3 @@
-from agents.agent import Agent
-from function_approximators.dqn_fa import FCNetwork
-
 from copy import deepcopy
 import gym
 import numpy as np
@@ -12,37 +9,37 @@ from torch.distributions.categorical import Categorical
 import torch.nn
 from torch.optim import Adam
 from typing import Dict, Iterable, List
+from abc import ABC, abstractmethod
 
-class DQN_Agent(Agent):
+
+class Agent(ABC):
 
     def __init__(
         self,
         action_space: gym.Space,
         observation_space: gym.Space,
-        learning_rate: float,
-        hidden_size: Iterable[int],
-        target_update_freq: int,
-        batch_size: int,
         gamma: float,
         epsilon: float,
-        **kwargs
+        target_update_freq: int,
     ):
 
-        super().__init__(action_space, observation_space)
+        self.action_space = action_space
+        self.observation_space = observation_space
 
         self.target_update_freq = target_update_freq
         self.gamma = gamma
         self.epsilon = epsilon
         self.update_counter = 0
 
-        self.model = FCNetwork((observation_space.shape[0], *hidden_size, action_space.n))
-        self.target_model = deepcopy(self.model)
-        self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
 
     def schedule_hyperparameters(self, timestep, max_timestep):
         
         max_deduct, decay = 0.97, 0.1
         self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
+
+    # @abstractmethod
+    # def act(self, obs: np.ndarray):
+    #     ...
 
     def act(self, obs, explore):
         
@@ -56,6 +53,10 @@ class DQN_Agent(Agent):
             action = torch.argmax(actions).item()
 
         return action
+
+    # @abstractmethod
+    # def update(self):
+    #     ...
 
     def update(self, batch):
 
@@ -79,13 +80,7 @@ class DQN_Agent(Agent):
         q_loss.backward()
         # perform an optimisation step of the parameters of the critic network
         self.model_optim.step()
-   
-        # print(f"Q: {Q}")
-        # print(f"Q_next: {Q_next}")
-        # print(f"q_target: {q_target}")
-        # print(f"y: {y}")
-        # print(f"q_loss: {q_loss}")
-        
+          
         # increase update counter
         self.update_counter += 1
 
@@ -96,3 +91,65 @@ class DQN_Agent(Agent):
 
         # print(q_loss)      
         return {"q_loss": q_loss.item()}
+
+
+class DQN_Agent(Agent):
+
+    def __init__(self,
+        action_space: gym.Space,
+        observation_space: gym.Space,
+        gamma: float,
+        epsilon: float,    
+        target_update_freq: int,
+        fa,
+        learning_rate: float,
+        hidden_size: Iterable[int],
+        batch_size: int,  
+        **kwargs
+    ):
+        
+        super().__init__(
+            action_space, 
+            observation_space,
+            gamma,
+            epsilon,
+            target_update_freq
+        )
+
+        self.model = fa((observation_space.shape[0], *hidden_size, action_space.n))
+        if torch.cuda.is_available():
+            self.model.cuda()
+
+        self.target_model = deepcopy(self.model)
+        self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
+
+
+class Linear_Agent(Agent):
+
+    def __init__(self,
+        action_space: gym.Space,
+        observation_space: gym.Space,
+        gamma: float,
+        epsilon: float,    
+        target_update_freq: int,
+        fa,
+        learning_rate: float,
+        hidden_size: Iterable[int],
+        batch_size: int,  
+        **kwargs
+    ):
+        
+        super().__init__(
+            action_space, 
+            observation_space,
+            gamma,
+            epsilon,
+            target_update_freq
+        )
+
+        self.model = fa(observation_space.shape[0], action_space.n)
+        if torch.cuda.is_available():
+            self.model.cuda()
+
+        self.target_model = deepcopy(self.model)
+        self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)

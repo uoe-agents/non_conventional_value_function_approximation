@@ -1,5 +1,5 @@
-import torch.nn as nn
-import gym
+# import torch.nn as nn
+# import gym
 import numpy as np 
 from collections import namedtuple
 import torch
@@ -63,37 +63,3 @@ class ReplayBuffer:
         )
         return batch        
 
-
-class FCNetwork(nn.Module):
-
-    def __init__(self, layer_dims):
-
-        # self.input_dim = input_dim
-        # self.output_dim = output_dim
-
-        super().__init__()
-        self.model = self.compile_fcn(layer_dims)
-
-    def compile_fcn(self, dims):
-        
-        layers = []
-
-        for i in range(len(dims) - 1):
-            layers.append(nn.Linear(dims[i], dims[i+1]))
-            if (i < len(dims) - 1):
-                layers.append(nn.ReLU())
-
-        model = nn.Sequential(*layers)
-        
-        return model
-
-    def forward(self, x):
-        
-        return self.model(x)
-
-    
-    def hard_update(self, target_net):
-        for param, target_param in zip(self.parameters(), target_net.parameters()):
-            param.data.copy_(target_param.data)
-
-        

@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import time
 
-from agents.dqn_agent import DQN_Agent
-from function_approximators.dqn_fa import ReplayBuffer
+# from agents.agents import DQN_Agent
+from function_approximators.replay import ReplayBuffer
 
 
 def play_episode(
@@ -56,12 +56,13 @@ def play_episode(
     return episode_timesteps, episode_return, losses
 
 
-def train(env, config, output = True, render=False):
+def train(env, config, fa, agent, output = True, render=False):
 
     timesteps_elapsed = 0
-    agent = DQN_Agent(
+    agent = agent(
         action_space = env.action_space, 
-        observation_space = env.observation_space, 
+        observation_space = env.observation_space,
+        fa=fa, 
         **config
     )
     replay_buffer = ReplayBuffer(config["buffer_capacity"])
