@@ -10,9 +10,6 @@ class FA_model(nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, x): 
-        return self.model(x)
-
     def hard_update(self, target_net):
         
         for param, target_param in zip(self.parameters(), target_net.parameters()):
@@ -37,11 +34,21 @@ class NeuralNetwork(FA_model):
         model = nn.Sequential(*layers)
         return model
 
+    def forward(self, x): 
+        return self.model(x)
+
 
 class LinearModel(FA_model):
 
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, output_dim, poly_degree):
 
         super().__init__()
-        self.model = nn.Linear(input_dim, output_dim)
+        self.model = nn.Linear(input_dim*poly_degree, output_dim)
+        self.poly_degree = poly_degree
+
+    def _polynomial_features(self, x):
+        return torch.cat([x ** i for i in range(1, self.poly_degree+1)], -1)
         
+    def forward(self, x): 
+        return self.model(self._polynomial_features(x))
+        # return self.model(x)

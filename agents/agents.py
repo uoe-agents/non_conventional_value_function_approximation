@@ -7,7 +7,7 @@ from torch import Tensor
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 import torch.nn
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 from typing import Dict, Iterable, List
 from abc import ABC, abstractmethod
 
@@ -37,9 +37,6 @@ class Agent(ABC):
         max_deduct, decay = 0.97, 0.1
         self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
 
-    # @abstractmethod
-    # def act(self, obs: np.ndarray):
-    #     ...
 
     def act(self, obs, explore):
         
@@ -54,14 +51,11 @@ class Agent(ABC):
 
         return action
 
-    # @abstractmethod
-    # def update(self):
-    #     ...
 
     def update(self, batch):
 
         # Obtain the action values given the current states in the batch from critics network
-        Q = self.model(batch.states)       
+        Q = self.model(batch.states)    
         # Obtain the action values of the actions selected in the batch
         q_current = Q.gather(1, batch.actions.long())
 
@@ -93,7 +87,7 @@ class Agent(ABC):
         return {"q_loss": q_loss.item()}
 
 
-class DQN_Agent(Agent):
+class DQNAgent(Agent):
 
     def __init__(self,
         action_space: gym.Space,
@@ -124,7 +118,7 @@ class DQN_Agent(Agent):
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
 
 
-class Linear_Agent(Agent):
+class LinearAgent(Agent):
 
     def __init__(self,
         action_space: gym.Space,
@@ -134,8 +128,8 @@ class Linear_Agent(Agent):
         target_update_freq: int,
         fa,
         learning_rate: float,
-        hidden_size: Iterable[int],
-        batch_size: int,  
+        batch_size: int,
+        poly_degree: int,  
         **kwargs
     ):
         
@@ -147,9 +141,9 @@ class Linear_Agent(Agent):
             target_update_freq
         )
 
-        self.model = fa(observation_space.shape[0], action_space.n)
+        self.model = fa(observation_space.shape[0], action_space.n, poly_degree)
         if torch.cuda.is_available():
             self.model.cuda()
 
         self.target_model = deepcopy(self.model)
-        self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
+        self.model_optim = SGD(self.model.parameters(), lr=learning_rate)
