@@ -7,7 +7,7 @@ from torch import Tensor
 import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 import torch.nn
-from torch.optim import Adam, SGD
+from torch.optim import Adam, SGD, RMSprop
 from typing import Dict, Iterable, List
 from abc import ABC, abstractmethod
 
@@ -32,12 +32,6 @@ class Agent(ABC):
         self.update_counter = 0
 
 
-    def schedule_hyperparameters(self, timestep, max_timestep):
-        
-        max_deduct, decay = 0.97, 0.1
-        self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
-
-
     def act(self, obs, explore):
         
         if explore and np.random.random_sample() < self.epsilon:
@@ -46,6 +40,7 @@ class Agent(ABC):
         else:
             # Obtain the action values given the current observations from the Critics Network
             actions = self.model(Tensor(obs))
+            # print(actions)
             # Select the action with the highest action value given the current observations
             action = torch.argmax(actions).item()
 
@@ -55,7 +50,8 @@ class Agent(ABC):
     def update(self, batch):
 
         # Obtain the action values given the current states in the batch from critics network
-        Q = self.model(batch.states)    
+        Q = self.model(batch.states) 
+        # print(Q)   
         # Obtain the action values of the actions selected in the batch
         q_current = Q.gather(1, batch.actions.long())
 
@@ -117,6 +113,11 @@ class DQNAgent(Agent):
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
 
+    def schedule_hyperparameters(self, timestep, max_timestep):
+        
+        max_deduct, decay = 0.97, 0.1
+        self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
+
 
 class LinearAgent(Agent):
 
@@ -146,4 +147,9 @@ class LinearAgent(Agent):
             self.model.cuda()
 
         self.target_model = deepcopy(self.model)
-        self.model_optim = SGD(self.model.parameters(), lr=learning_rate)
+        self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
+    
+    def schedule_hyperparameters(self, timestep, max_timestep):
+        
+        max_deduct, decay = 0.97, 0.1
+        self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct

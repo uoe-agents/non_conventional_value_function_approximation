@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import time
 
-# from agents.agents import DQN_Agent
 from function_approximators.replay import ReplayBuffer
 
 
@@ -119,20 +118,9 @@ def train(env, config, fa, agent, output = True, render=False):
                     pbar.write(
                         f"Evaluation at timestep {timesteps_elapsed} returned a mean returns of {eval_returns}"
                     )
-                    pbar.write(f"Epsilon = {agent.epsilon}")
+                    # pbar.write(f"Epsilon = {agent.epsilon}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)
         
-    if config["plot_loss"]:
-        print("Plotting DQN loss...")
-        losses = np.array(losses_all)
-        x_values = config["batch_size"] + np.arange(len(losses))
-        plt.plot(x_values, losses, "-", alpha=0.7, label=f"DQN loss")
-        plt.legend(loc="best")
-        plt.xlabel("Timesteps")
-        plt.ylabel("Loss")
-        plt.tight_layout(pad=0.3)
-        plt.savefig(f"DQN_loss.pdf", format="pdf")
-        # plt.show()
 
     return np.array(eval_returns_all), np.array(eval_times_all)
