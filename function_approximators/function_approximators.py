@@ -44,8 +44,8 @@ class LinearModel(FA_model):
 
         super().__init__()
         # self.model = nn.Linear(input_dim, output_dim)
-        # self.model = nn.Linear(input_dim*poly_degree, output_dim)
-        self.model = nn.Linear(50, output_dim)
+        self.model = nn.Linear(input_dim*poly_degree, output_dim)
+        # self.model = nn.Linear(50, output_dim)
         self.poly_degree = poly_degree
 
     
@@ -106,6 +106,6 @@ class LinearModel(FA_model):
             
         
     def forward(self, x): 
-        return self.model(self._tiling_features(x))
-        # return self.model(self._polynomial_features_1(x))
+        # return self.model(self._tiling_features(x))
+        return self.model(self._polynomial_features_1(x))
         # return self.model(x)
