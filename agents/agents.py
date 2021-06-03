@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from torch.distributions.categorical import Categorical
 import torch.nn
 from torch.optim import Adam, SGD, RMSprop
+from torch.optim.lr_scheduler import StepLR
 from typing import Dict, Iterable, List
 from abc import ABC, abstractmethod
 
@@ -70,6 +71,9 @@ class Agent(ABC):
         q_loss.backward()
         # perform an optimisation step of the parameters of the critic network
         self.model_optim.step()
+        
+        self.scheduler.step()
+        # print(self.model_optim.param_groups[0]['lr'])
           
         # increase update counter
         self.update_counter += 1
@@ -131,6 +135,10 @@ class LinearAgent(Agent):
         learning_rate: float,
         batch_size: int,
         poly_degree: int,  
+        max_deduct: float,
+        decay: float,
+        lr_step_size: int,
+        lr_gamma: float,
         **kwargs
     ):
         
@@ -142,14 +150,21 @@ class LinearAgent(Agent):
             target_update_freq
         )
 
+        self.max_deduct = max_deduct
+        self.decay = decay
+        self.lr_step_size = lr_step_size
+        self.lr_gamma = lr_gamma
+
         self.model = fa(observation_space.shape[0], action_space.n, poly_degree)
         if torch.cuda.is_available():
             self.model.cuda()
 
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
+        self.scheduler = StepLR(self.model_optim, step_size=self.lr_step_size, gamma=self.lr_gamma)
+
     
     def schedule_hyperparameters(self, timestep, max_timestep):
         
-        max_deduct, decay = 0.97, 0.1
+        max_deduct, decay = self.max_deduct, self.decay
         self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct

@@ -44,8 +44,8 @@ class LinearModel(FA_model):
 
         super().__init__()
         # self.model = nn.Linear(input_dim, output_dim)
-        self.model = nn.Linear(input_dim*poly_degree, output_dim)
-        # self.model = nn.Linear(input_dim+16, output_dim)
+        # self.model = nn.Linear(input_dim*poly_degree, output_dim)
+        self.model = nn.Linear(50, output_dim)
         self.poly_degree = poly_degree
 
     
@@ -66,38 +66,46 @@ class LinearModel(FA_model):
 
     
     def _tiling_features(self, x):
-        
-        tiling_coords_theta = [-0.3,-0.1,-0.05,-0.01,0.01,0.05,0.1,0.3]
-        tiling_coords_pos = [-3,-1,-0.5,0.5,1,3]
+          
+        tiling_coords_theta = np.array([-0.18,-0.13,-0.08,-0.03,0.07,0.12,0.17,0.22])
+        tiling_coords_pos = np.array([-3.2,-1.2,-0.7,0.3,0.8,2.8])
+
+        a = []
 
         try:
-            f_tiling_theta = np.digitize(x[:,2], tiling_coords_theta)
+            for i in range(3):
+                f_tiling_theta = np.digitize(x[:,2], tiling_coords_theta+i*0.02)
+                
+                new_features_theta = np.zeros((x.shape[0],len(tiling_coords_theta)+1))
+                new_features_theta[np.arange(x.shape[0]),f_tiling_theta]=1
+                a.append(torch.Tensor(new_features_theta))
+                
+                f_tiling_pos = np.digitize(x[:,0], tiling_coords_pos+i*0.2)
+                
+                new_features_pos = np.zeros((x.shape[0],len(tiling_coords_pos)+1))
+                new_features_pos[np.arange(x.shape[0]),f_tiling_pos]=1
+                a.append(torch.Tensor(new_features_pos))
             
-            new_features_theta = np.zeros((x.shape[0],len(tiling_coords_theta)+1))
-            new_features_theta[np.arange(x.shape[0]),f_tiling_theta]=1
-            
-            f_tiling_pos = np.digitize(x[:,0], tiling_coords_pos)
-            
-            new_features_pos = np.zeros((x.shape[0],len(tiling_coords_pos)+1))
-            new_features_pos[np.arange(x.shape[0]),f_tiling_pos]=1
-
-            return torch.cat([x,torch.Tensor(new_features_theta),torch.Tensor(new_features_pos)], -1)
+            return torch.cat([x[:,[1,3]],a[0],a[1],a[2],a[3],a[4],a[5]], -1)
 
         except:
-            f_tiling_theta = np.digitize(x[2], tiling_coords_theta)
+            for i in range(3):
+                f_tiling_theta = np.digitize(x[2], tiling_coords_theta+i*0.02)
+                
+                new_features_theta = np.zeros(len(tiling_coords_theta)+1)
+                new_features_theta[f_tiling_theta]=1
+                a.append(torch.Tensor(new_features_theta))
+                
+                f_tiling_pos = np.digitize(x[0], tiling_coords_pos+i*0.2)
+                
+                new_features_pos = np.zeros(len(tiling_coords_pos)+1)
+                new_features_pos[f_tiling_pos]=1
+                a.append(torch.Tensor(new_features_pos))
             
-            new_features_theta = np.zeros(len(tiling_coords_theta)+1)
-            new_features_theta[f_tiling_theta]=1
-            
-            f_tiling_pos = np.digitize(x[0], tiling_coords_pos)
-            
-            new_features_pos = np.zeros(len(tiling_coords_pos)+1)
-            new_features_pos[f_tiling_pos]=1
-
-            return torch.cat([x,torch.Tensor(new_features_theta),torch.Tensor(new_features_pos)], -1)
+            return torch.cat([x[[1,3]],a[0],a[1],a[2],a[3],a[4],a[5]], -1)
             
         
     def forward(self, x): 
-        # return self.model(self._tiling_features(x))
-        return self.model(self._polynomial_features_1(x))
+        return self.model(self._tiling_features(x))
+        # return self.model(self._polynomial_features_1(x))
         # return self.model(x)
