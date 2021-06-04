@@ -1,8 +1,7 @@
 import torch.nn as nn
-import gym
 import numpy as np 
-from collections import namedtuple
 import torch
+from torch.nn.functional import softmax
 
 
 class FA_model(nn.Module):
@@ -40,13 +39,16 @@ class NeuralNetwork(FA_model):
 
 class LinearModel(FA_model):
 
-    def __init__(self, input_dim, output_dim, poly_degree):
+    def __init__(self, input_dim, output_dim, poly_degree, tiling_specs):
 
         super().__init__()
-        # self.model = nn.Linear(input_dim, output_dim)
-        self.model = nn.Linear(input_dim*poly_degree, output_dim)
-        # self.model = nn.Linear(50, output_dim)
+
         self.poly_degree = poly_degree
+        self.lows, self.highs, self.specs = tiling_specs
+
+        # self.model = nn.Linear(input_dim, output_dim)
+        # self.model = nn.Linear(input_dim*poly_degree, output_dim)
+        self.model = nn.Linear(77, output_dim)       
 
     
     def _polynomial_features_1(self, x):
@@ -65,7 +67,46 @@ class LinearModel(FA_model):
             return torch.Tensor([i*j for i in x for j in x])
 
     
-    def _tiling_features(self, x):
+    def _create_grid(self, lower, upper, bins, offsets):
+        return [np.linspace(lower[dim], upper[dim], bins[dim] + 1)[1:-1] + offsets[dim] for dim in range(len(bins))]
+
+    def _create_tilings(self, lower, upper, specs):
+        return [self._create_grid(lower, upper, bins, offsets) for bins, offsets in specs]
+
+    def _discretize(self, sample, grid):
+        return tuple(int(np.digitize(s, g)) for s, g in zip(sample, grid))
+
+    def _tile_encoding(self, sample, tilings):
+        return [self._discretize(sample, grid) for grid in tilings]
+
+    def _get_indices(self, tile_encoding, n_bins):
+        n_tilings = len(tile_encoding)
+        indices = [i*n_bins + j + n*(n_bins**2) for n, (i, j) in enumerate(tile_encoding)]
+        features = np.zeros(n_bins**2*n_tilings)
+        features[indices]=1
+
+        return features
+
+    def _tiling_features(self, x, lower, upper, specs):
+
+        tilings = self._create_tilings(lower, upper, specs)
+        
+        if len(x.size()) == 1:
+            tile_encoding = self._tile_encoding(x[[0,2]], tilings)
+            features = self._get_indices(tile_encoding, specs[0][0][0])
+            
+            return torch.cat([x[[1,3]],torch.Tensor(features)], -1)
+        
+        elif len(x.size()) == 2:       
+            features = []
+            for xi in x:
+                tile_encoding = self._tile_encoding(xi[[0,2]], tilings)
+                features.append(self._get_indices(tile_encoding, specs[0][0][0]))
+
+            return torch.cat([x[:,[1,3]],torch.Tensor(features)], -1)
+
+
+    def _tiling_features_2(self, x):
           
         tiling_coords_theta = np.array([-0.18,-0.13,-0.08,-0.03,0.07,0.12,0.17,0.22])
         tiling_coords_pos = np.array([-3.2,-1.2,-0.7,0.3,0.8,2.8])
@@ -106,6 +147,7 @@ class LinearModel(FA_model):
             
         
     def forward(self, x): 
-        # return self.model(self._tiling_features(x))
-        return self.model(self._polynomial_features_1(x))
+        
+        return self.model(self._tiling_features(x, self.lows, self.highs, self.specs))
+        # return self.model(self._polynomial_features_1(x))
         # return self.model(x)

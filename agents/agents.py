@@ -134,7 +134,8 @@ class LinearAgent(Agent):
         fa,
         learning_rate: float,
         batch_size: int,
-        poly_degree: int,  
+        poly_degree: int,
+        tiling_specs: list,  
         max_deduct: float,
         decay: float,
         lr_step_size: int,
@@ -155,7 +156,7 @@ class LinearAgent(Agent):
         self.lr_step_size = lr_step_size
         self.lr_gamma = lr_gamma
 
-        self.model = fa(observation_space.shape[0], action_space.n, poly_degree)
+        self.model = fa(observation_space.shape[0], action_space.n, poly_degree, tiling_specs)
         if torch.cuda.is_available():
             self.model.cuda()
 
