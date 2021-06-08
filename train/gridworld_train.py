@@ -1,12 +1,13 @@
 import gym 
+import gym_minigrid
 
 from function_approximators.function_approximators import NeuralNetwork, LinearModel
 from train_utils import train
 
 from agents.agents import DQNAgent, LinearAgent
 
-RENDER = True
-env = gym.make("CartPole-v1")
+RENDER = False
+env = gym.make("MiniGrid-Empty-5x5-v0")
 
 
 # DQN Config
@@ -19,11 +20,15 @@ CONFIG_DQN = {
     "learning_rate": 8e-4,
     "hidden_size": (128,64),
     "target_update_freq": 200,
-    "batch_size": 10,
+    "batch_size": 32,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "plot_loss": False,
     "epsilon": 1,
+    "max_deduct": 0.95,
+    "decay": 0.2,
+    "lr_step_size": 1000,
+    "lr_gamma": 0.99,
     "max_steps": 200,
 }
 
@@ -57,10 +62,10 @@ configs = [CONFIG_DQN, CONFIG_LINEAR]
 
 if __name__ == "__main__":
 
-    print(configs[1])
+    print(configs[0])
     _ = train(env, 
-            configs[1], 
-            fa=function_approximators[1], 
-            agent = agents[1], 
+            configs[0], 
+            fa=function_approximators[0], 
+            agent = agents[0], 
             render=RENDER)
     env.close()

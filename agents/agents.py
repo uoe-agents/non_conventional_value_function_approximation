@@ -98,7 +98,11 @@ class DQNAgent(Agent):
         fa,
         learning_rate: float,
         hidden_size: Iterable[int],
-        batch_size: int,  
+        batch_size: int, 
+        max_deduct: float,
+        decay: float,
+        lr_step_size: int,
+        lr_gamma: float, 
         **kwargs
     ):
         
@@ -110,17 +114,17 @@ class DQNAgent(Agent):
             target_update_freq
         )
 
+        self.max_deduct = max_deduct
+        self.decay = decay
+
         self.model = fa((observation_space.shape[0], *hidden_size, action_space.n))
-        if torch.cuda.is_available():
-            self.model.cuda()
 
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
+        self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
 
     def schedule_hyperparameters(self, timestep, max_timestep):
-        
-        max_deduct, decay = 0.97, 0.1
-        self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
+        self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
 class LinearAgent(Agent):
@@ -153,8 +157,6 @@ class LinearAgent(Agent):
 
         self.max_deduct = max_deduct
         self.decay = decay
-        self.lr_step_size = lr_step_size
-        self.lr_gamma = lr_gamma
 
         self.model = fa(observation_space.shape[0], action_space.n, poly_degree, tiling_specs)
         if torch.cuda.is_available():
@@ -162,10 +164,8 @@ class LinearAgent(Agent):
 
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
-        self.scheduler = StepLR(self.model_optim, step_size=self.lr_step_size, gamma=self.lr_gamma)
+        self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
 
     
     def schedule_hyperparameters(self, timestep, max_timestep):
-        
-        max_deduct, decay = self.max_deduct, self.decay
-        self.epsilon = 1.0 - (min(1.0, timestep/(decay * max_timestep))) * max_deduct
+        self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import numpy as np 
 import torch
-from torch.nn.functional import softmax
+# from torch.nn.functional import softmax
 
 
 class FA_model(nn.Module):
