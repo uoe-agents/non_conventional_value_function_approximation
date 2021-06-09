@@ -6,7 +6,7 @@ from train_utils import train
 from agents.agents import DQNAgent, LinearAgent
 
 RENDER = True
-env = gym.make("CartPole-v1")
+env = gym.make("MountainCar-v0")
 
 
 # DQN Config
@@ -15,19 +15,15 @@ CONFIG_DQN = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 10,
-    "learning_rate": 0.001,
-    "hidden_size": (16,32),
+    "eval_episodes": 5,
+    "learning_rate": 8e-4,
+    "hidden_size": (128,64),
     "target_update_freq": 200,
-    "batch_size": 32,
+    "batch_size": 10,
     "gamma": 0.99,
-    "buffer_capacity": int(1e7),
+    "buffer_capacity": int(1e6),
     "plot_loss": False,
     "epsilon": 1,
-    "max_deduct": 0.97,
-    "decay": 0.5,
-    "lr_step_size": 1000,
-    "lr_gamma": 0.99,
     "max_steps": 200,
 }
 

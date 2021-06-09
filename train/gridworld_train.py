@@ -1,5 +1,5 @@
 import gym 
-import gym_minigrid
+from custom_envs.windy_gridworld import WindyGridworldEnv
 
 from function_approximators.function_approximators import NeuralNetwork, LinearModel
 from train_utils import train
@@ -7,7 +7,7 @@ from train_utils import train
 from agents.agents import DQNAgent, LinearAgent
 
 RENDER = False
-env = gym.make("MiniGrid-Empty-5x5-v0")
+env = WindyGridworldEnv()
 
 
 # DQN Config
@@ -16,17 +16,17 @@ CONFIG_DQN = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 5,
-    "learning_rate": 8e-4,
-    "hidden_size": (128,64),
+    "eval_episodes": 10,
+    "learning_rate": 0.001,
+    "hidden_size": (16,16),
     "target_update_freq": 200,
     "batch_size": 32,
     "gamma": 0.99,
-    "buffer_capacity": int(1e6),
+    "buffer_capacity": int(1e7),
     "plot_loss": False,
     "epsilon": 1,
-    "max_deduct": 0.95,
-    "decay": 0.2,
+    "max_deduct": 0.97,
+    "decay": 0.5,
     "lr_step_size": 1000,
     "lr_gamma": 0.99,
     "max_steps": 200,
@@ -38,21 +38,20 @@ CONFIG_LINEAR = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 5,
-    "learning_rate": 0.02,
-    "target_update_freq": 50,
+    "eval_episodes": 10,
+    "learning_rate": 0.005,
+    "target_update_freq": 200,
     "batch_size": 32,
     "gamma": 0.99,
     "buffer_capacity": int(1e7),
     "plot_loss": False,
     "epsilon": 1,
-    "max_steps": 200,
-    "poly_degree": 2,
-    "max_deduct": 0.97,
+    "max_deduct": 0.95,
     "decay": 0.5,
     "lr_step_size": 1000,
     "lr_gamma": 0.99,
-    "tiling_specs": [[-2,-0.2], [2,0.2], [([20,20],[0,0]), ([20,20],[0.2,0.02]), ([20,20],[-0.2,-0.02])]]
+    "max_steps": 200,
+    "poly_degree": 1,
 }
 
 

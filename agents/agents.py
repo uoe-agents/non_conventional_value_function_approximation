@@ -41,30 +41,43 @@ class Agent(ABC):
         else:
             # Obtain the action values given the current observations from the Critics Network
             actions = self.model(Tensor(obs))
-            # print(actions)
             # Select the action with the highest action value given the current observations
             action = torch.argmax(actions).item()
 
+        # if self.update_counter % 1000 == 0:
+        #     print(action)
+        
         return action
 
 
     def update(self, batch):
 
         # Obtain the action values given the current states in the batch from critics network
-        Q = self.model(batch.states) 
-        # print(Q)   
+        Q = self.model(batch.states)   
         # Obtain the action values of the actions selected in the batch
         q_current = Q.gather(1, batch.actions.long())
 
         # Obtain the action values given the next states in the batch from critics_target network
         Q_next = self.target_model(batch.next_states)
         # obtain the target value: maximum action value over next states action values
-        q_target = (1-batch.done) * Q_next.detach().max(1)[0].unsqueeze(1)
+        q_target = (1-batch.done) * Q_next.max(1)[0].unsqueeze(1)
         # calculate the value of y
         y = batch.rewards + self.gamma * q_target
-
+        
         # calculate the mse loss between y and q_current
         q_loss = F.mse_loss(q_current, y) 
+        
+        if self.update_counter % 1000 == 0:
+        #     print(f"Weights: {self.model.model[0].weight}")
+        #     print(f"States: {batch.states}")
+        #     print(f"Actions: {batch.actions}")
+        #     print(f"Q: {Q}") 
+        #     print(f"q_current: {q_current}")
+        #     print(f"Q_next: {Q_next}")
+        #     print(f"y: {y}")
+            print(f"q_loss: {q_loss}")
+        
+        
         # zeroise the gradients of the optimiser
         self.model_optim.zero_grad()      
         # perform a backward pass
@@ -82,6 +95,8 @@ class Agent(ABC):
         if self.update_counter % self.target_update_freq == 0:
             # if update condition is met, hard update the parameters of the target network
             self.target_model.hard_update(self.model)
+
+
 
         # print(q_loss)      
         return {"q_loss": q_loss.item()}
@@ -117,7 +132,13 @@ class DQNAgent(Agent):
         self.max_deduct = max_deduct
         self.decay = decay
 
-        self.model = fa((observation_space.shape[0], *hidden_size, action_space.n))
+        if observation_space.shape == ():
+            input_size = observation_space.n
+        else:
+            input_size = observation_space.shape[0]
+
+        self.model = fa((input_size, *hidden_size, action_space.n))
+
 
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
@@ -139,7 +160,7 @@ class LinearAgent(Agent):
         learning_rate: float,
         batch_size: int,
         poly_degree: int,
-        tiling_specs: list,  
+        # tiling_specs: list,  
         max_deduct: float,
         decay: float,
         lr_step_size: int,
@@ -157,8 +178,14 @@ class LinearAgent(Agent):
 
         self.max_deduct = max_deduct
         self.decay = decay
+        
+        if observation_space.shape == ():
+            input_size = observation_space.n
+        else:
+            input_size = observation_space.shape[0]
 
-        self.model = fa(observation_space.shape[0], action_space.n, poly_degree, tiling_specs)
+        self.model = fa(input_size, action_space.n, poly_degree)
+        
         if torch.cuda.is_available():
             self.model.cuda()
 
