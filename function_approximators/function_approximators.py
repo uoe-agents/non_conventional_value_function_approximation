@@ -76,4 +76,4 @@ class LinearModel(FAModel):
             return self.model(x)
 
 
-class DecisionTree(FAModel)
+# class DecisionTree(FAModel)
