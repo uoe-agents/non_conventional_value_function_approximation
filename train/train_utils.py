@@ -10,6 +10,7 @@ def play_episode(
     env,
     agent,
     replay_buffer,
+    non_param,
     train=True,
     explore=True,
     render=False,
@@ -19,7 +20,9 @@ def play_episode(
 
     obs = env.reset()
     done = False
+    
     losses = []
+    
     if render:
         env.render()
 
@@ -39,8 +42,13 @@ def play_episode(
             )
             if len(replay_buffer) >= batch_size:
                 batch = replay_buffer.sample(batch_size)
-                loss = agent.update(batch)["q_loss"]
-                losses.append(loss)
+                if non_param:
+                    if not agent.fitted:
+                        agent.initial_fit(batch)
+                    agent.update(batch)
+                else:
+                    loss = agent.update(batch)["q_loss"]
+                    losses.append(loss)
 
         episode_timesteps += 1
         episode_return += reward
@@ -89,6 +97,7 @@ def train(env, config, fa, agent, output = True, render=False):
                 train=True,
                 explore=True,
                 render=False,
+                non_param = config["non_param"],
                 max_steps=config["episode_length"],
                 batch_size=config["batch_size"],
             )
@@ -99,7 +108,6 @@ def train(env, config, fa, agent, output = True, render=False):
 
             if timesteps_elapsed % config["eval_freq"] < episode_timesteps:
                 eval_returns = 0
-                max_steps = config["max_steps"]
 
                 for _ in range(config["eval_episodes"]):
                     _, episode_return, _ = play_episode(
@@ -109,7 +117,8 @@ def train(env, config, fa, agent, output = True, render=False):
                         train=False,
                         explore=False,
                         render=render,
-                        max_steps=max_steps,
+                        non_param = config["non_param"],
+                        max_steps = config["max_steps"],
                         batch_size=config["batch_size"],
                     )
                     eval_returns += episode_return / config["eval_episodes"]
@@ -119,7 +128,8 @@ def train(env, config, fa, agent, output = True, render=False):
                         f"Evaluation at timestep {timesteps_elapsed} returned a mean returns of {eval_returns}"
                     )
                     pbar.write(f"Epsilon = {agent.epsilon}")
-                    pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
+                    if not config["non_param"]:
+                        pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)
         

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import numpy as np 
 import torch
-# from torch.nn.functional import softmax
+from sklearn.tree import DecisionTreeRegressor
 
 
 class FAModel(nn.Module):
@@ -76,4 +76,16 @@ class LinearModel(FAModel):
             return self.model(x)
 
 
-# class DecisionTree(FAModel)
+class DecisionTree():
+
+    def __init__(self, max_depth, min_samples_split, min_samples_leaf):
+
+        self.model = DecisionTreeRegressor(max_depth=max_depth, 
+                                           min_samples_split=min_samples_split, 
+                                           min_samples_leaf=min_samples_leaf)    
+
+    def predict(self, inputs):
+        return self.model.predict(inputs)
+
+    def fit(self, inputs, outputs):
+        self.model.fit(inputs, outputs)

@@ -192,7 +192,96 @@ class LinearAgent(Agent):
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
         self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
+   
+    def schedule_hyperparameters(self, timestep, max_timestep):
+        self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
+
+class NonParametricAgent():
     
+    def __init__(self,
+        action_space: gym.Space,
+        observation_space: gym.Space,
+        gamma: float,
+        epsilon: float,    
+        fa,
+        max_deduct: float,
+        decay: float,
+        model_save_freq: int,
+        max_depth: int, 
+        min_samples_split: int, 
+        min_samples_leaf: int,
+        **kwargs
+    ):
+
+        self.action_space = action_space
+        self.observation_space = observation_space
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.max_deduct = max_deduct
+        self.decay = decay
+        self.model_save_freq = model_save_freq
+
+        self.update_counter = 0
+        self.fitted = False
+        self.encoded_actions = self._encode_actions()
+
+        self.model = fa(max_depth, min_samples_split, min_samples_leaf)
+        self.models = [self.model]
+
+
+    def _one_hot(self, length, index):
+        vector = np.zeros(length)
+        vector[index]=int(1)
+        return list(vector)
+
+    def _encode_actions(self):
+        length = self.action_space.n
+        return [self._one_hot(length, i) for i in range(length)] 
+
+    def _predict(self, inputs):
+        if len(self.models) > 1:
+            out = []
+            for i, f in enumerate(self.models[1:]):
+                out.append(f.predict(inputs)*(i+1)/(sum(range(i+2))))
+            return np.mean(out, 0)
+        else:
+            return self.models[0].predict(inputs)
+
+    def act(self, obs, explore):
+        if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
+            action = self.action_space.sample()
+        else:       
+            Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            action = np.argmax(Q)
+        return action
+
+    def update(self, batch):
+        inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
+        preds = []
+
+        for i in range(self.action_space.n):
+            next_inputs = np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + self.encoded_actions[i]], -1)
+            preds.append(self._predict(next_inputs))
+        
+        preds = np.array(preds).T
+        outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)
+    
+        self.model.fit(inputs, outputs)
+        
+        # increase update counter
+        self.update_counter += 1
+
+        # check for update condition
+        if self.update_counter % self.model_save_freq == 0:
+            # if update condition is met, save current model
+            self.models.append(deepcopy(self.model))
+
+    def initial_fit(self, batch):
+        inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
+        outputs = np.array(batch.rewards).reshape(-1)
+        self.model.fit(inputs, outputs)
+        self.fitted = True
+
     def schedule_hyperparameters(self, timestep, max_timestep):
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
