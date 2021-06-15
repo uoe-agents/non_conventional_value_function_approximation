@@ -2,9 +2,10 @@ import torch.nn as nn
 import numpy as np 
 import torch
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
 
 
-class FAModel(nn.Module):
+class ParametricModel(nn.Module):
 
     def __init__(self):
         super().__init__()
@@ -15,7 +16,7 @@ class FAModel(nn.Module):
             param.data.copy_(target_param.data)
 
 
-class NeuralNetwork(FAModel):
+class NeuralNetwork(ParametricModel):
 
     def __init__(self, layer_dims):
 
@@ -38,7 +39,7 @@ class NeuralNetwork(FAModel):
         return self.model(x)
 
 
-class LinearModel(FAModel):
+class LinearModel(ParametricModel):
 
     def __init__(self, input_dim, output_dim, poly_degree=1, tiling_specs=None):
 
@@ -76,16 +77,30 @@ class LinearModel(FAModel):
             return self.model(x)
 
 
-class DecisionTree():
-
-    def __init__(self, max_depth, min_samples_split, min_samples_leaf):
-
-        self.model = DecisionTreeRegressor(max_depth=max_depth, 
-                                           min_samples_split=min_samples_split, 
-                                           min_samples_leaf=min_samples_leaf)    
-
+class NonParametricModel():
+   
     def predict(self, inputs):
         return self.model.predict(inputs)
 
     def fit(self, inputs, outputs):
         self.model.fit(inputs, outputs)
+
+
+class DecisionTree(NonParametricModel):
+
+    def __init__(self, max_depth, min_samples_split, min_samples_leaf):
+
+        super().__init__()
+        self.model = DecisionTreeRegressor(max_depth=max_depth, 
+                                           min_samples_split=min_samples_split, 
+                                           min_samples_leaf=min_samples_leaf)    
+
+
+class RandomForest(NonParametricModel):
+
+    def __init__(self, n_estimators, max_depth, min_samples_split, min_samples_leaf):
+
+        self.model = RandomForestRegressor(n_estimators=n_estimators,
+                                           max_depth=max_depth, 
+                                           min_samples_split=min_samples_split, 
+                                           min_samples_leaf=min_samples_leaf)    

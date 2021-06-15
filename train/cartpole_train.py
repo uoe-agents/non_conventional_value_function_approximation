@@ -51,7 +51,6 @@ CONFIG_LINEAR = {
     "decay": 0.5,
     "lr_step_size": 1000,
     "lr_gamma": 0.99,
-    # "tiling_specs": [[-2,-0.2], [2,0.2], [([20,20],[0,0]), ([20,20],[0.2,0.02]), ([20,20],[-0.2,-0.02])]]
 }
 
 # Decision Tree Config
@@ -59,12 +58,14 @@ CONFIG_DT = {
     "episode_length": 200,
     "max_timesteps": 20000,
     "max_time": 30 * 60,
-    "eval_freq": 1000, 
+    "eval_freq": 2000, 
     "eval_episodes": 10,
     "model_save_freq": 1000,
+    "model_save_capacity": 100,
+    "model_update_freq": 1,
     "batch_size": 512,
     "gamma": 0.99,
-    "buffer_capacity": int(1e7),
+    "buffer_capacity": int(1e5),
     "epsilon": 1,
     "max_deduct": 0.95,
     "decay": 0.5,
@@ -74,6 +75,7 @@ CONFIG_DT = {
     "min_samples_split": 20, 
     "min_samples_leaf": 10,
 }
+
 
 
 function_approximators = [NeuralNetwork, LinearModel, DecisionTree]

@@ -11,6 +11,7 @@ def play_episode(
     agent,
     replay_buffer,
     non_param,
+    model_update_freq,
     train=True,
     explore=True,
     render=False,
@@ -45,7 +46,8 @@ def play_episode(
                 if non_param:
                     if not agent.fitted:
                         agent.initial_fit(batch)
-                    agent.update(batch)
+                    elif episode_timesteps % model_update_freq == 0:
+                        agent.update(batch)
                 else:
                     loss = agent.update(batch)["q_loss"]
                     losses.append(loss)
@@ -97,6 +99,7 @@ def train(env, config, fa, agent, output = True, render=False):
                 train=True,
                 explore=True,
                 render=False,
+                model_update_freq = config["model_update_freq"],                
                 non_param = config["non_param"],
                 max_steps=config["episode_length"],
                 batch_size=config["batch_size"],
@@ -117,6 +120,7 @@ def train(env, config, fa, agent, output = True, render=False):
                         train=False,
                         explore=False,
                         render=render,
+                        model_update_freq = config["model_update_freq"],
                         non_param = config["non_param"],
                         max_steps = config["max_steps"],
                         batch_size=config["batch_size"],

@@ -1,7 +1,7 @@
 from copy import deepcopy
 import gym
 import numpy as np
-import os.path
+
 import torch
 from torch import Tensor
 import torch.nn.functional as F
@@ -9,8 +9,10 @@ from torch.distributions.categorical import Categorical
 import torch.nn
 from torch.optim import Adam, SGD, RMSprop
 from torch.optim.lr_scheduler import StepLR
+
 from typing import Dict, Iterable, List
 from abc import ABC, abstractmethod
+from collections import deque
 
 
 class Agent(ABC):
@@ -208,9 +210,8 @@ class NonParametricAgent():
         max_deduct: float,
         decay: float,
         model_save_freq: int,
-        max_depth: int, 
-        min_samples_split: int, 
-        min_samples_leaf: int,
+        model_save_capacity: int,
+        model_params, 
         **kwargs
     ):
 
@@ -226,8 +227,8 @@ class NonParametricAgent():
         self.fitted = False
         self.encoded_actions = self._encode_actions()
 
-        self.model = fa(max_depth, min_samples_split, min_samples_leaf)
-        self.models = [self.model]
+        self.model = fa(**model_params)
+        self.models = deque([self.model], maxlen=model_save_capacity)
 
 
     def _one_hot(self, length, index):
@@ -240,13 +241,13 @@ class NonParametricAgent():
         return [self._one_hot(length, i) for i in range(length)] 
 
     def _predict(self, inputs):
-        if len(self.models) > 1:
-            out = []
-            for i, f in enumerate(self.models[1:]):
-                out.append(f.predict(inputs)*(i+1)/(sum(range(i+2))))
-            return np.mean(out, 0)
-        else:
-            return self.models[0].predict(inputs)
+        # if len(self.models) > 1:
+        out = []
+        for i, f in enumerate(self.models):
+            out.append(f.predict(inputs)*(i+1)/(sum(range(len(self.models)+1))))
+        return np.mean(out, 0)
+        # else:
+        #     return self.models[0].predict(inputs)
 
     def act(self, obs, explore):
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
