@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
+from sklearn.svm import SVR
 
 
 class ParametricModel(nn.Module):
@@ -104,3 +105,20 @@ class RandomForest(NonParametricModel):
                                            max_depth=max_depth, 
                                            min_samples_split=min_samples_split, 
                                            min_samples_leaf=min_samples_leaf)    
+
+class ExtraTrees(NonParametricModel):
+
+    def __init__(self, n_estimators, max_depth, min_samples_split, min_samples_leaf):
+
+        self.model = ExtraTreesRegressor(n_estimators=n_estimators,
+                                           max_depth=max_depth, 
+                                           min_samples_split=min_samples_split, 
+                                           min_samples_leaf=min_samples_leaf)
+
+class SupportVectorRegressor(NonParametricModel):
+
+    def __init__(self, kernel, degree, C):
+
+        self.model = SVR(kernel=kernel,
+                         degree=degree, 
+                         C=C)

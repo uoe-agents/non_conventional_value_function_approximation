@@ -241,13 +241,12 @@ class NonParametricAgent():
         return [self._one_hot(length, i) for i in range(length)] 
 
     def _predict(self, inputs):
-        # if len(self.models) > 1:
+        l = len(self.models)
         out = []
         for i, f in enumerate(self.models):
-            out.append(f.predict(inputs)*(i+1)/(sum(range(len(self.models)+1))))
-        return np.mean(out, 0)
-        # else:
-        #     return self.models[0].predict(inputs)
+            out.append(f.predict(inputs)*(i+1)/(sum(range(l+1))))
+        # out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
+        return np.sum(out, 0)
 
     def act(self, obs, explore):
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
