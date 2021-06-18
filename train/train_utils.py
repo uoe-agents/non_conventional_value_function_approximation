@@ -11,12 +11,11 @@ def play_episode(
     agent,
     replay_buffer,
     non_param,
-    model_update_freq,
+    max_steps,
+    batch_size,
     train=True,
     explore=True,
     render=False,
-    max_steps=200,
-    batch_size=64,
 ):
 
     obs = env.reset()
@@ -32,8 +31,24 @@ def play_episode(
 
     while not done:
         action = agent.act(obs, explore=explore)
-        next_obs, reward, done, _ = env.step(action)
+        next_obs, reward, done, _ = env.step(action) 
+       
+        # reward += max(obs[0], 0)
+        if obs[0] < -1:
+            reward += 1
+        if obs[0] > 0.1:
+            reward += 1
+        if obs[0] > 0.3:
+            reward += 2
+        # if next_obs[1] > obs[1] and next_obs[1]>0 and obs[1]>0.05:
+        #     reward += 0.2
+        # elif next_obs[1] < obs[1] and next_obs[1]<=0 and obs[1]<=0.05:
+        #     reward += 0.1
+        if done:
+            reward += 10 
+        
         if train:
+           
             replay_buffer.push(
                 np.array(obs, dtype=np.float32),
                 np.array([action], dtype=np.float32),
@@ -46,12 +61,12 @@ def play_episode(
                 if non_param:
                     if not agent.fitted:
                         agent.initial_fit(batch)
-                    elif episode_timesteps % model_update_freq == 0:
+                    else:
                         agent.update(batch)
                 else:
                     loss = agent.update(batch)["q_loss"]
                     losses.append(loss)
-
+        
         episode_timesteps += 1
         episode_return += reward
 
@@ -98,8 +113,7 @@ def train(env, config, fa, agent, output = True, render=False):
                 replay_buffer,
                 train=True,
                 explore=True,
-                render=False,
-                model_update_freq = config["model_update_freq"],                
+                render=False,              
                 non_param = config["non_param"],
                 max_steps=config["episode_length"],
                 batch_size=config["batch_size"],
@@ -120,7 +134,6 @@ def train(env, config, fa, agent, output = True, render=False):
                         train=False,
                         explore=False,
                         render=render,
-                        model_update_freq = config["model_update_freq"],
                         non_param = config["non_param"],
                         max_steps = config["max_steps"],
                         batch_size=config["batch_size"],

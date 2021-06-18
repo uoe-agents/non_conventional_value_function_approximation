@@ -89,10 +89,12 @@ class NonParametricModel():
 
 class DecisionTree(NonParametricModel):
 
-    def __init__(self, max_depth, min_samples_split, min_samples_leaf):
+    def __init__(self, criterion="mse", splitter="best", max_depth=None, min_samples_split=2, min_samples_leaf=1):
 
         super().__init__()
-        self.model = DecisionTreeRegressor(max_depth=max_depth, 
+        self.model = DecisionTreeRegressor(criterion=criterion,
+                                           splitter=splitter,
+                                           max_depth=max_depth, 
                                            min_samples_split=min_samples_split, 
                                            min_samples_leaf=min_samples_leaf)    
 

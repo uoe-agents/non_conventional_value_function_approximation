@@ -1,5 +1,5 @@
 import gym 
-from custom_envs.windy_gridworld import WindyGridworldEnv
+from custom_envs.gridworlds import WindyGridworldEnv
 
 from function_approximators.function_approximators import NeuralNetwork, LinearModel
 from train_utils import train
@@ -30,6 +30,7 @@ CONFIG_DQN = {
     "lr_step_size": 1000,
     "lr_gamma": 0.99,
     "max_steps": 200,
+    "non_param": False,
 }
 
 # Linear Config
@@ -52,6 +53,7 @@ CONFIG_LINEAR = {
     "lr_gamma": 0.99,
     "max_steps": 200,
     "poly_degree": 1,
+    "non_param": False,
 }
 
 
