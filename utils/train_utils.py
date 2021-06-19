@@ -32,23 +32,8 @@ def play_episode(
     while not done:
         action = agent.act(obs, explore=explore)
         next_obs, reward, done, _ = env.step(action) 
-       
-        # reward += max(obs[0], 0)
-        if obs[0] < -1:
-            reward += 1
-        if obs[0] > 0.1:
-            reward += 1
-        if obs[0] > 0.3:
-            reward += 2
-        # if next_obs[1] > obs[1] and next_obs[1]>0 and obs[1]>0.05:
-        #     reward += 0.2
-        # elif next_obs[1] < obs[1] and next_obs[1]<=0 and obs[1]<=0.05:
-        #     reward += 0.1
-        if done:
-            reward += 10 
-        
-        if train:
            
+        if train:  
             replay_buffer.push(
                 np.array(obs, dtype=np.float32),
                 np.array([action], dtype=np.float32),

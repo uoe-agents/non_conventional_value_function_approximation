@@ -2,7 +2,7 @@ import torch.nn as nn
 import numpy as np 
 import torch
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
+from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, GradientBoostingRegressor
 from sklearn.svm import SVR
 
 
@@ -113,6 +113,17 @@ class ExtraTrees(NonParametricModel):
     def __init__(self, n_estimators, max_depth, min_samples_split, min_samples_leaf):
 
         self.model = ExtraTreesRegressor(n_estimators=n_estimators,
+                                           max_depth=max_depth, 
+                                           min_samples_split=min_samples_split, 
+                                           min_samples_leaf=min_samples_leaf)
+
+class GradientBoostingTrees(NonParametricModel):
+
+    def __init__(self, loss="ls", learning_rate=0.1, n_estimators=100, max_depth=3, min_samples_split=2, min_samples_leaf=1):
+
+        self.model = GradientBoostingRegressor(loss=loss,
+                                           learning_rate=learning_rate,
+                                           n_estimators=n_estimators,
                                            max_depth=max_depth, 
                                            min_samples_split=min_samples_split, 
                                            min_samples_leaf=min_samples_leaf)
