@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import time
+from copy import deepcopy
 
 from function_approximators.replay import ReplayBuffer
 
@@ -133,7 +134,9 @@ def train(env, config, fa, agent, output = True, render=False):
                     if not config["non_param"]:
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
                 eval_returns_all.append(eval_returns)
-                eval_times_all.append(time.time() - start_time)
-        
+                eval_times_all.append(time.time() - start_time)      
 
-    return np.array(eval_returns_all), np.array(eval_times_all)
+    if config["export_tree"]:
+        return np.array(eval_returns_all), np.array(eval_times_all), deepcopy(agent.model)
+    else:
+        return np.array(eval_returns_all), np.array(eval_times_all)

@@ -209,6 +209,7 @@ class NonParametricAgent():
         fa,
         max_deduct: float,
         decay: float,
+        update_freq: int,
         model_save_freq: int,
         model_save_capacity: int,
         model_params, 
@@ -222,8 +223,9 @@ class NonParametricAgent():
         self.max_deduct = max_deduct
         self.decay = decay
         self.model_save_freq = model_save_freq
+        self.update_freq = update_freq
 
-        self.update_counter = 0
+        self.step_counter = 0
         self.fitted = False
         self.encoded_actions = self._encode_actions()
 
@@ -257,25 +259,28 @@ class NonParametricAgent():
         return action
 
     def update(self, batch):
-        inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
-        preds = []
-
-        for i in range(self.action_space.n):
-            next_inputs = np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + self.encoded_actions[i]], -1)
-            preds.append(self._predict(next_inputs))
+        self.step_counter += 1
         
-        preds = np.array(preds).T
-        outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)
-    
-        self.model.fit(inputs, outputs)
-        
-        # increase update counter
-        self.update_counter += 1
+        if self.step_counter % self.update_freq == 0:
+            
+            inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
+            preds = []
+            
+            for i in range(self.action_space.n):
+                next_inputs = np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + self.encoded_actions[i]], -1)
+                preds.append(self._predict(next_inputs))
+            
+            preds = np.array(preds).T
+            outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
+            self.model.fit(inputs, outputs)
 
-        # check for update condition
-        if self.update_counter % self.model_save_freq == 0:
-            # if update condition is met, save current model
-            self.models.append(deepcopy(self.model))
+            # check for update condition
+            if self.step_counter % self.model_save_freq == 0:
+                # if update condition is met, save current model
+                self.models.append(deepcopy(self.model))
+            
+            else:
+                pass
 
     def initial_fit(self, batch):
         inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)

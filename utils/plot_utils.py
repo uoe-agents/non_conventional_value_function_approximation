@@ -21,7 +21,7 @@ def plot_returns(values: list, stds: list, xlabel: str, ylabel: str, legend_name
             alpha=0.2,
             antialiased=True,
         )
-    plt.legend(loc="lower left")
+    plt.legend(loc="lower right")
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     # plt.tight_layout(pad=0.3)
