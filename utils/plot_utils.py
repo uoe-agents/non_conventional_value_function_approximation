@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_returns(values: list, stds: list, xlabel: str, ylabel: str, legend_names: list, eval_freq: int):
+def plot_returns(save_name: str, values: list, stds: list, xlabel: str, ylabel: str, legend_names: list, eval_freq: int, markers: list):
     """
     Plot values with respect to timesteps
     
@@ -12,8 +12,10 @@ def plot_returns(values: list, stds: list, xlabel: str, ylabel: str, legend_name
     :param legend_name (str): name of algorithm
     """
     x_values = eval_freq + np.arange(len(values[0])) * eval_freq
+    plt.figure(figsize=(8,5))
+    plt.rc('font', size=13)
     for i in range(len(values)):
-        plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}")
+        plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}", marker=markers[i])
         plt.fill_between(
             x_values,
             values[i] - stds[i],
@@ -21,7 +23,9 @@ def plot_returns(values: list, stds: list, xlabel: str, ylabel: str, legend_name
             alpha=0.2,
             antialiased=True,
         )
+    plt.xticks(eval_freq*2 + np.arange(len(values[0])/2) * eval_freq*2, rotation=30)
     plt.legend(loc="lower right")
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    # plt.tight_layout(pad=0.3)
+
+    plt.savefig(f"{save_name}.pdf", format="pdf", bbox_inches="tight")

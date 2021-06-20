@@ -136,7 +136,4 @@ def train(env, config, fa, agent, output = True, render=False):
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)      
 
-    if config["export_tree"]:
-        return np.array(eval_returns_all), np.array(eval_times_all), deepcopy(agent.model)
-    else:
-        return np.array(eval_returns_all), np.array(eval_times_all)
+    return np.array(eval_returns_all), np.array(eval_times_all)
