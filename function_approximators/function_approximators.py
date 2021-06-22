@@ -4,6 +4,7 @@ import torch
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, GradientBoostingRegressor
 from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsRegressor
 
 
 class ParametricModel(nn.Module):
@@ -135,3 +136,12 @@ class SupportVectorRegressor(NonParametricModel):
         self.model = SVR(kernel=kernel,
                          degree=degree, 
                          C=C)
+
+class KNeighboursRegressor(NonParametricModel):
+
+    def __init__(self, n_neighbors=5, weights="uniform", algorithm="auto", leaf_size=30):
+
+        self.model = KNeighborsRegressor(n_neighbors=n_neighbors,
+                                         weights=weights,
+                                         algorithm=algorithm,
+                                         leaf_size=leaf_size)

@@ -272,15 +272,15 @@ class NonParametricAgent():
             
             preds = np.array(preds).T
             outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
-            self.model.fit(inputs, outputs)
+            self.model.fit(inputs, outputs) 
 
             # check for update condition
             if self.step_counter % self.model_save_freq == 0:
                 # if update condition is met, save current model
                 self.models.append(deepcopy(self.model))
-            
-            else:
-                pass
+        
+        else:
+            pass
 
     def initial_fit(self, batch):
         inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
