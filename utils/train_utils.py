@@ -107,13 +107,13 @@ def train(env, config, fa, agent, output = True, render=False):
             
             timesteps_elapsed += episode_timesteps
             pbar.update(episode_timesteps)
-            losses_all += losses
+            losses_all += losses   
 
             if timesteps_elapsed % config["eval_freq"] < episode_timesteps:
                 eval_returns = 0
 
                 for _ in range(config["eval_episodes"]):
-                    _, episode_return, _ = play_episode(
+                    episode_timesteps, episode_return, _ = play_episode(
                         env,
                         agent,
                         replay_buffer,
@@ -135,6 +135,11 @@ def train(env, config, fa, agent, output = True, render=False):
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)
+
+                if episode_timesteps <= 5:
+                    print(f"Ep. timesteps: {episode_timesteps}")
+                    print(f"Total timesteps: {timesteps_elapsed}")
+                    break
 
                       
 
