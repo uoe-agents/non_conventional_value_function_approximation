@@ -5,6 +5,8 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, GradientBoostingRegressor
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel
 
 
 class ParametricModel(nn.Module):
@@ -145,3 +147,12 @@ class KNeighboursRegressor(NonParametricModel):
                                          weights=weights,
                                          algorithm=algorithm,
                                          leaf_size=leaf_size)
+
+class GaussianProcess(NonParametricModel):
+
+    def __init__(self, kernel, alpha=1e-10, n_restarts_optimizer=0, normalize_y=False):
+
+        self.model = GaussianProcessRegressor(kernel,
+                                              alpha=alpha,
+                                              n_restarts_optimizer=n_restarts_optimizer,
+                                              normalize_y=normalize_y)

@@ -1,8 +1,9 @@
 import gym 
 import numpy as np
+import operator
 
 from function_approximators.function_approximators import NeuralNetwork, LinearModel, DecisionTree, RandomForest, ExtraTrees, GradientBoostingTrees, SupportVectorRegressor, KNeighboursRegressor
-from utils.train_utils import train
+from utils.train_utils import train, solve
 from utils.plot_utils import plot_returns
 
 from agents.av_agents import DQNAgent, LinearAgent, NonParametricAgent
@@ -197,6 +198,7 @@ n_seeds = 10
 if __name__ == "__main__":
 
     for i in range(len(function_approximators)):
+        
         returns = []
         for j in range(n_seeds):
             r, _ = train(env, 
@@ -211,4 +213,26 @@ if __name__ == "__main__":
         with open(f'cartpole_{legends[i]}.csv', 'ab') as f:
             np.savetxt(f, mean, delimiter=',')
             np.savetxt(f, std, delimiter=',')
+
+        n_eps = []
+        n_steps = []
+        n_seeds=100
+
+        for j in range(n_seeds):
+            print(f"\n Run: {i+1} \n")
+            s, e = solve(env, 
+                    CONFIG_LINEAR, 
+                    fa=function_approximators[i], 
+                    agent = agents[i],
+                    target_return=195,
+                    op=operator.ge, 
+                    render=RENDER)
+            env.close()
+            n_eps.append(e)
+            n_steps.append(s)
+
+        mean_steps = np.mean(n_steps)
+        std_steps = np.std(n_steps)
+        mean_eps = np.mean(n_eps)
+        std_eps = np.std(n_eps)
             

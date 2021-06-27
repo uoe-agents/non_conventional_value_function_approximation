@@ -69,7 +69,7 @@ class Agent(ABC):
         # calculate the mse loss between y and q_current
         q_loss = F.mse_loss(q_current, y) 
         
-        if self.update_counter % 1000 == 0:
+        # if self.update_counter % 1000 == 0:
         #     print(f"Weights: {self.model.model[0].weight}")
         #     print(f"States: {batch.states}")
         #     print(f"Actions: {batch.actions}")
@@ -77,7 +77,7 @@ class Agent(ABC):
         #     print(f"q_current: {q_current}")
         #     print(f"Q_next: {Q_next}")
         #     print(f"y: {y}")
-            print(f"q_loss: {q_loss}")
+            # print(f"q_loss: {q_loss}")
         
         
         # zeroise the gradients of the optimiser
@@ -97,8 +97,6 @@ class Agent(ABC):
         if self.update_counter % self.target_update_freq == 0:
             # if update condition is met, hard update the parameters of the target network
             self.target_model.hard_update(self.model)
-
-
 
         # print(q_loss)      
         return {"q_loss": q_loss.item()}
@@ -272,6 +270,8 @@ class NonParametricAgent():
             
             preds = np.array(preds).T
             outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
+            # print(inputs)
+            # print(outputs[0])
             self.model.fit(inputs, outputs) 
 
             # check for update condition

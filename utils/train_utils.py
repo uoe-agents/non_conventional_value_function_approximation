@@ -134,13 +134,72 @@ def train(env, config, fa, agent, output = True, render=False):
                     if not config["non_param"]:
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
                 eval_returns_all.append(eval_returns)
-                eval_times_all.append(time.time() - start_time)
-
-                if episode_timesteps <= 5:
-                    print(f"Ep. timesteps: {episode_timesteps}")
-                    print(f"Total timesteps: {timesteps_elapsed}")
-                    break
-
-                      
+                eval_times_all.append(time.time() - start_time)                  
 
     return np.array(eval_returns_all), np.array(eval_times_all)
+
+
+def solve(env, config, fa, agent, target_return, op, render=False):
+
+    timesteps_elapsed = 0
+    agent = agent(
+        action_space = env.action_space, 
+        observation_space = env.observation_space,
+        fa=fa, 
+        **config
+    )
+    replay_buffer = ReplayBuffer(config["buffer_capacity"])
+    n_eps = 0
+
+    start_time = time.time()
+
+    
+    while timesteps_elapsed < config["max_timesteps"]:
+        elapsed_seconds = time.time() - start_time
+        
+        if elapsed_seconds > config["max_time"]:
+            # pbar.write(f"Training ended after {elapsed_seconds}s.")
+            break
+        
+        agent.schedule_hyperparameters(timesteps_elapsed, config["max_timesteps"])
+        episode_timesteps, _, _ = play_episode(
+            env,
+            agent,
+            replay_buffer,
+            train=True,
+            explore=True,
+            render=False,              
+            non_param = config["non_param"],
+            max_steps=config["episode_length"],
+            batch_size=config["batch_size"],
+        )
+        
+        timesteps_elapsed += episode_timesteps
+        n_eps += 1
+
+        eval_returns = 0
+        for _ in range(config["eval_episodes"]):
+            episode_timesteps, episode_return, _ = play_episode(
+                env,
+                agent,
+                replay_buffer,
+                train=False,
+                explore=False,
+                render=render,
+                non_param = config["non_param"],
+                max_steps = config["max_steps"],
+                batch_size=config["batch_size"],
+            )
+            eval_returns += episode_return / config["eval_episodes"]
+
+        if op(eval_returns, target_return):
+            n=0
+            print(f"Ep. timesteps: {episode_timesteps}")
+            print(f"Total timesteps: {timesteps_elapsed}")
+            print(f"Total episodes: {n_eps}")
+            print(f"Evaluation mean return: {eval_returns}")
+            break
+        else:
+            n=1
+
+    return timesteps_elapsed, n_eps, n
