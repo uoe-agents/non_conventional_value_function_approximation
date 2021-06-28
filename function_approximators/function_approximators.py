@@ -7,6 +7,8 @@ from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel
+import graphviz
+from sklearn import tree
 
 
 class ParametricModel(nn.Module):
@@ -99,7 +101,17 @@ class DecisionTree(NonParametricModel):
                                            splitter=splitter,
                                            max_depth=max_depth, 
                                            min_samples_split=min_samples_split, 
-                                           min_samples_leaf=min_samples_leaf)    
+                                           min_samples_leaf=min_samples_leaf)
+
+    def export_tree(self, feature_names, plot_name):
+        dot_data = tree.export_graphviz(self.model, out_file=None, 
+                                feature_names=feature_names,  
+                                filled=True)
+
+        # Draw graph
+        graph = graphviz.Source(dot_data, format="png") 
+        graph.render(plot_name)
+
 
 
 class RandomForest(NonParametricModel):

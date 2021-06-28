@@ -135,7 +135,7 @@ def train(env, config, fa, agent, output = True, render=False):
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)                  
-
+       
     return np.array(eval_returns_all), np.array(eval_times_all)
 
 
@@ -198,6 +198,7 @@ def solve(env, config, fa, agent, target_return, op, render=False):
             print(f"Total timesteps: {timesteps_elapsed}")
             print(f"Total episodes: {n_eps}")
             print(f"Evaluation mean return: {eval_returns}")
+            agent.model.export_tree(config["feature_names"], config["plot_name"])
             break
         else:
             n=1
