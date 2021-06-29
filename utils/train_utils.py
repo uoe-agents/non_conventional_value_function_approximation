@@ -198,7 +198,7 @@ def solve(env, config, fa, agent, target_return, op, render=False):
             print(f"Total timesteps: {timesteps_elapsed}")
             print(f"Total episodes: {n_eps}")
             print(f"Evaluation mean return: {eval_returns}")
-            agent.model.export_tree(config["feature_names"], config["plot_name"])
+            # agent.model.export_tree(config["feature_names"], config["plot_name"])
             break
         else:
             n=1

@@ -107,7 +107,6 @@ class DecisionTree(NonParametricModel):
         dot_data = tree.export_graphviz(self.model, out_file=None, 
                                 feature_names=feature_names,  
                                 filled=True)
-
         # Draw graph
         graph = graphviz.Source(dot_data, format="png") 
         graph.render(plot_name)
@@ -168,3 +167,15 @@ class GaussianProcess(NonParametricModel):
                                               alpha=alpha,
                                               n_restarts_optimizer=n_restarts_optimizer,
                                               normalize_y=normalize_y)
+
+class GaussianProcessOnline(NonParametricModel):
+
+    def __init__(self, kernel, alpha=1e-10, n_restarts_optimizer=0, normalize_y=False):
+
+        self.model = GaussianProcessRegressor(kernel,
+                                              alpha=alpha,
+                                              n_restarts_optimizer=n_restarts_optimizer,
+                                              normalize_y=normalize_y)
+
+    def predict(self, inputs, return_std=False):
+        return self.model.predict(inputs, return_std=return_std)
