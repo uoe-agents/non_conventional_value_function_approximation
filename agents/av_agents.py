@@ -292,7 +292,7 @@ class NonParametricAgent():
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
-class GaussianProccessOnlineAgent():
+class eGaussianProccessAgent():
     
     def __init__(self,
         action_space: gym.Space,
@@ -343,13 +343,25 @@ class GaussianProccessOnlineAgent():
         # out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
         return np.sum(out, 0)
 
+    def _predict_std(self, inputs):
+        l = len(self.models)
+        out = []
+        for i, f in enumerate(self.models):
+            preds = f.predict(inputs, return_std=True)
+            out.append((preds[0]+self.epsilon*preds[1])*(i+1)/(sum(range(l+2))))
+        out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
+        return np.sum(out, 0)
+
     def act(self, obs, explore):
-        if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
+        
+        if explore and not self.fitted:
             action = self.action_space.sample()
-        else:        
-            q_values = [self.model.predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1), return_std=True) for i in range(self.action_space.n)]
-            Q = [q[0]+2*q[1] for q in q_values]
-            action = np.argmax(Q)
+        else:
+            q_values = [self._predict_std(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            action = np.argmax(q_values)
+        # else:
+        #     q_values = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+        #     action = np.argmax(q_values)
         return action
 
     def update(self, batch):
@@ -366,8 +378,7 @@ class GaussianProccessOnlineAgent():
             
             preds = np.array(preds).T
             outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
-            # print(inputs)
-            # print(outputs[0])
+
             self.model.fit(inputs, outputs) 
 
             # check for update condition
@@ -383,6 +394,66 @@ class GaussianProccessOnlineAgent():
         outputs = np.array(batch.rewards).reshape(-1)
         self.model.fit(inputs, outputs)
         self.fitted = True
+
+    def schedule_hyperparameters(self, timestep, max_timestep):
+        self.epsilon = 2.0 - (min(2.0, timestep/(self.decay * max_timestep))) * self.max_deduct
+
+
+class OnlineGaussianProccessAgent():
+    
+    def __init__(self,
+        action_space: gym.Space,
+        observation_space: gym.Space,
+        gamma: float,
+        epsilon: float,    
+        fa,
+        max_deduct: float,
+        decay: float,
+        model_params, 
+        **kwargs
+    ):
+
+        self.action_space = action_space
+        self.observation_space = observation_space
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.max_deduct = max_deduct
+        self.decay = decay
+
+        self.step_counter = 0
+        self.encoded_actions = self._encode_actions()
+        self.model = fa(**model_params)
+
+        self.X = np.zeros((1, self.observation_space.shape[0] + self.action_space.n))
+    
+    def _one_hot(self, length, index):
+        vector = np.zeros(length)
+        vector[index]=int(1)
+        return list(vector)
+
+    def _encode_actions(self):
+        length = self.action_space.n
+        return [self._one_hot(length, i) for i in range(length)] 
+
+    def act(self, obs, explore):
+        if (explore and np.random.random_sample() < self.epsilon):
+            action = self.action_space.sample()
+        else:        
+            Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            action = np.argmax(Q)
+        return action    
+
+    def update(self, obs, next_obs, reward, action, done):
+        
+        Q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+        Q_max = np.max(Q_values)
+        x = np.concatenate([obs, self.encoded_actions[action]],-1).reshape(1,-1)
+        Q_prev = self.model.predict(self.X, x).item()
+
+        y = (reward + self.gamma * (1-done) * Q_max - Q_prev)
+        self.model.update(self.X, x, y) 
+
+        self.X = np.vstack([self.X, x])
 
     def schedule_hyperparameters(self, timestep, max_timestep):
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct

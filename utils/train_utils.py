@@ -13,7 +13,8 @@ def play_episode(
     replay_buffer,
     non_param,
     max_steps,
-    batch_size,
+    online=False,
+    batch_size=32,
     train=True,
     explore=True,
     render=False,
@@ -34,7 +35,7 @@ def play_episode(
         action = agent.act(obs, explore=explore)
         next_obs, reward, done, _ = env.step(action) 
            
-        if train:  
+        if train and not online:  
             replay_buffer.push(
                 np.array(obs, dtype=np.float32),
                 np.array([action], dtype=np.float32),
@@ -52,6 +53,8 @@ def play_episode(
                 else:
                     loss = agent.update(batch)["q_loss"]
                     losses.append(loss)
+        elif train:
+            agent.update(obs, next_obs, reward, action, done)
         
         episode_timesteps += 1
         episode_return += reward
@@ -66,7 +69,7 @@ def play_episode(
     return episode_timesteps, episode_return, losses
 
 
-def train(env, config, fa, agent, output = True, render=False):
+def train(env, config, fa, agent, output = True, render=False, online=False):
 
     timesteps_elapsed = 0
     agent = agent(
@@ -99,7 +102,8 @@ def train(env, config, fa, agent, output = True, render=False):
                 replay_buffer,
                 train=True,
                 explore=True,
-                render=False,              
+                render=False,       
+                online=online,       
                 non_param = config["non_param"],
                 max_steps=config["episode_length"],
                 batch_size=config["batch_size"],
@@ -120,6 +124,7 @@ def train(env, config, fa, agent, output = True, render=False):
                         train=False,
                         explore=False,
                         render=render,
+                        online=online,
                         non_param = config["non_param"],
                         max_steps = config["max_steps"],
                         batch_size=config["batch_size"],

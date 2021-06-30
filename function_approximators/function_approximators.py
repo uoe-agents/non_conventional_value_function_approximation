@@ -168,7 +168,7 @@ class GaussianProcess(NonParametricModel):
                                               n_restarts_optimizer=n_restarts_optimizer,
                                               normalize_y=normalize_y)
 
-class GaussianProcessOnline(NonParametricModel):
+class eGaussianProcess(NonParametricModel):
 
     def __init__(self, kernel, alpha=1e-10, n_restarts_optimizer=0, normalize_y=False):
 
@@ -179,3 +179,45 @@ class GaussianProcessOnline(NonParametricModel):
 
     def predict(self, inputs, return_std=False):
         return self.model.predict(inputs, return_std=return_std)
+
+class OnlineGaussianProcess():
+
+    def __init__(self, kernel, sigma_0):
+
+        self.kernel = kernel
+        self.model = self.initialise(sigma_0)
+
+    def initialise(self, sigma_0):
+        self.sigma_0 = sigma_0
+        self.alpha = np.array([[1]])
+        self.C = np.array([[1]])
+        self.mew = 1
+        self.sigma = 1
+        self.r = 1
+        self.e = np.array([[1]])
+
+    def predict(self, X, x, return_sigma=False):
+        if return_sigma:
+            kk = self.kernel(X,x)
+            k = self.kernel(x,x)
+            mew = self.alpha.T @ kk
+            sigma = k + kk.T @ self.C @ kk
+            return mew, sigma
+        else:
+            return self.alpha.T @ self.kernel(X,x)
+
+    def _inc_dim_v(self, v):
+        return np.pad(v, ((0,1),(0,0)))
+
+    def _inc_dim_m(self, m):
+        return np.pad(m, ((0,1),(0,1)))
+
+    def update(self, X, x, y):
+        kk = self.kernel(X,x)
+        _, sigma = self.predict(X, x, return_sigma=True)
+        self.r = -1/(self.sigma_0**2 + sigma)
+        self.q = y / (self.sigma_0**2 + sigma)
+        self.e = np.vstack([[0], self.e])
+        self.s = self._inc_dim_v(self.C@kk) + self.e
+        self.C = self._inc_dim_m(self.C) + self.r*(self.s @ self.s.T)
+        self.alpha = self._inc_dim_v(self.alpha) + self.q*self.s 
