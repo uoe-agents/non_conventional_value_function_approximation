@@ -136,6 +136,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False):
                         f"Evaluation at timestep {timesteps_elapsed} returned a mean returns of {eval_returns}"
                     )
                     pbar.write(f"Epsilon = {agent.epsilon}")
+                    pbar.write(f"Support Points = {agent.X.shape[0]}")
                     if not config["non_param"]:
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
                 eval_returns_all.append(eval_returns)

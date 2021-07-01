@@ -180,11 +180,14 @@ class eGaussianProcess(NonParametricModel):
     def predict(self, inputs, return_std=False):
         return self.model.predict(inputs, return_std=return_std)
 
+
 class OnlineGaussianProcess():
 
-    def __init__(self, kernel, sigma_0):
+    def __init__(self, kernel, sigma_0, epsilon_tol, basis_limit):
 
         self.kernel = kernel
+        self.epsilon_tol = epsilon_tol
+        self.basis_limit = basis_limit
         self.model = self.initialise(sigma_0)
 
     def initialise(self, sigma_0):
@@ -195,14 +198,15 @@ class OnlineGaussianProcess():
         self.sigma = 1
         self.r = 1
         self.e = np.array([[1]])
+        self.Q = np.array([[1]])
 
     def predict(self, X, x, return_sigma=False):
         if return_sigma:
             kk = self.kernel(X,x)
             k = self.kernel(x,x)
             mew = self.alpha.T @ kk
-            sigma = k + kk.T @ self.C @ kk
-            return mew, sigma
+            sigma = self.sigma_0**2 + k + kk.T @ self.C @ kk
+            return (mew, sigma)
         else:
             return self.alpha.T @ self.kernel(X,x)
 
@@ -212,12 +216,62 @@ class OnlineGaussianProcess():
     def _inc_dim_m(self, m):
         return np.pad(m, ((0,1),(0,1)))
 
+    def _dec_dim_v(self, v, index):
+        return np.delete(v, [index], axis=0)
+
+    def _dec_dim_m(self, m, index):
+        m = np.delete(m, [index], axis=0)
+        m = np.delete(m, [index], axis=1)
+        return m
+
     def update(self, X, x, y):
+        k = self.kernel(x,x)
         kk = self.kernel(X,x)
+        
         _, sigma = self.predict(X, x, return_sigma=True)
-        self.r = -1/(self.sigma_0**2 + sigma)
-        self.q = y / (self.sigma_0**2 + sigma)
-        self.e = np.vstack([[0], self.e])
-        self.s = self._inc_dim_v(self.C@kk) + self.e
-        self.C = self._inc_dim_m(self.C) + self.r*(self.s @ self.s.T)
-        self.alpha = self._inc_dim_v(self.alpha) + self.q*self.s 
+        self.r = -1/sigma
+        self.q = y/sigma
+
+        self.gamma = k - kk.T @ self.Q @ kk
+        self.e_hat = self.Q@kk
+
+        if self.gamma < self.epsilon_tol:
+            self.s = self.C@kk + self.e_hat
+            add = False    
+        else:
+            self.e = np.vstack([[0], self.e])
+            self.Q = self._inc_dim_m(self.Q) + self.gamma * (self._inc_dim_v(self.e_hat)-self.e) @ (self._inc_dim_v(self.e_hat)-self.e).T
+            self.s = self._inc_dim_v(self.C@kk) + self.e
+            self.C = self._inc_dim_m(self.C) + self.r*(self.s @ self.s.T)
+            self.alpha = self._inc_dim_v(self.alpha) + self.q*self.s 
+            add = True
+        
+        # index_del = None
+        # if X.shape[0] >= self.basis_limit:
+        #     epsilon = [np.absolute(self.alpha[i,0])/self.Q[i,i] for i in range(X.shape[0])]
+        #     index_del = np.argmin(epsilon)
+        #     self.e = self._dec_dim_v(self.e, 0)
+
+        #     Q_star = (self._dec_dim_v(self.Q[:, index_del], index_del)).reshape(-1,1)
+        #     # print(Q_star.shape)
+        #     q_star = self.Q[index_del,index_del]
+        #     # print(q_star.shape)
+        #     alpha_star = self.alpha[index_del,0]
+        #     # print(alpha_star.shape)
+        #     c_star = self.C[index_del, index_del]
+        #     # print(c_star.shape)
+        #     C_star = (self._dec_dim_v(self.C[:, index_del], index_del)).reshape(-1,1)
+        #     # print(C_star.shape)
+
+        #     self.e_hat = - Q_star/q_star
+        #     # print(self.e_hat)
+        #     self.Q = self._dec_dim_m(self.Q, index_del) - (Q_star@Q_star.T)/q_star
+        #     # print(self.Q.shape)
+        #     self.s = self._dec_dim_v(self.s, index_del)
+        #     # print(self.s.shape)
+        #     self.C = self._dec_dim_m(self.C, index_del) + c_star*(Q_star@Q_star.T)/(q_star**2) - 1/q_star* (Q_star@C_star.T + C_star@Q_star.T)
+        #     # print(self.C.shape)
+        #     self.alpha = self._dec_dim_v(self.alpha, index_del) + alpha_star/q_star * Q_star
+        #     # print(self.alpha.shape)
+
+        return add

@@ -17,8 +17,8 @@ CONFIG_DQN = {
     "episode_length": 200,
     "max_timesteps": 20000,
     "max_time": 30 * 60,
-    "eval_freq": 1000, 
-    "eval_episodes": 10,
+    "eval_freq": 1, 
+    "eval_episodes": 1,
     "learning_rate": 0.00075,
     "hidden_size": (32,32),
     "target_update_freq": 200,
@@ -76,7 +76,9 @@ CONFIG_DT = {
     "decay": 0.3,
     "max_steps": 200,
     "non_param": True,
-    "model_params": {"criterion":"mse","max_depth": 10, "min_samples_split": 20, "min_samples_leaf": 5},
+    "model_params": {"criterion":"mse","max_depth": 8, "min_samples_split": 20, "min_samples_leaf": 5},
+    "feature_names": ["Cart Position", "Cart Velocity", "Pole Angle", "Pole Angular Velocity", "Action: Push Left", "Action: Push Right"],
+    "plot_name": "dt_depth=8",
 }
 
 # Random Forest Config
@@ -85,7 +87,7 @@ CONFIG_RF = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 10,
+    "eval_episodes": 5,
     "model_save_freq": 1000,
     "model_save_capacity": 20,
     "update_freq": 1,
@@ -106,7 +108,7 @@ CONFIG_ET = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 10,
+    "eval_episodes": 5,
     "model_save_freq": 1000,
     "model_save_capacity": 20,
     "update_freq": 5,
@@ -148,7 +150,7 @@ CONFIG_SVR = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 10,
+    "eval_episodes": 5,
     "model_save_freq": 1000,
     "model_save_capacity": 20,
     "update_freq": 1,
@@ -170,7 +172,7 @@ CONFIG_KNR = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 10,
+    "eval_episodes": 5,
     "model_save_freq": 2000,
     "model_save_capacity": 10,
     "update_freq": 10,
@@ -183,6 +185,66 @@ CONFIG_KNR = {
     "max_steps": 200,
     "non_param": True,
     "model_params": {"n_neighbors":5, "weights": "uniform", "algorithm": "auto", "leaf_size": 30},
+}
+
+# Gaussian Process Config
+CONFIG_GP = {
+    "episode_length": 200,
+    "max_timesteps": 20000,
+    "max_time": 30 * 60,
+    "eval_freq": 1000, 
+    "eval_episodes": 5,
+    "model_save_freq": 2000,
+    "model_save_capacity": 10,
+    "update_freq": 10,
+    "batch_size": 512,
+    "gamma": 0.99,
+    "buffer_capacity": int(1e6),
+    "epsilon": 1,
+    "max_deduct": 0.95,
+    "decay": 0.4,
+    "max_steps": 200,
+    "non_param": True,
+    "model_params": {"alpha": 1e-10, "normalize_y": False, "kernel":  RBF(length_scale=0.05, length_scale_bounds="fixed")},
+}
+
+# Explorative Gaussian Process Config
+CONFIG_eGP = {
+    "episode_length": 200,
+    "max_timesteps": 20000,
+    "max_time": 30 * 60,
+    "eval_freq": 1000, 
+    "eval_episodes": 5,
+    "model_save_freq": 2000,
+    "model_save_capacity": 10,
+    "update_freq": 10,
+    "batch_size": 512,
+    "gamma": 0.99,
+    "buffer_capacity": int(1e6),
+    "epsilon": 1,
+    "max_deduct": 0,
+    "decay": 0.4,
+    "max_steps": 200,
+    "non_param": True,
+    "model_params": {"alpha": 1e-10, "normalize_y": False, "kernel":  RBF(length_scale=0.05, length_scale_bounds="fixed")},
+}
+
+# Online Gaussian Process Config
+CONFIG_GP_Online = {
+    "episode_length": 200,
+    "max_timesteps": 20000,
+    "max_time": 30 * 60,
+    "eval_freq": 1000, 
+    "eval_episodes": 5,
+    "gamma": 0.99,
+    "buffer_capacity": int(1e6),
+    "batch_size": 32,
+    "epsilon": 1,
+    "max_deduct": 0.95,
+    "decay": 0.4,
+    "max_steps": 200,
+    "non_param": True,
+    "model_params": {"sigma_0": 0.5, "kernel":  rbf_kernel, "epsilon_tol": 0.05, "basis_limit": 1000},
 }
 
 
