@@ -145,7 +145,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False):
     return np.array(eval_returns_all), np.array(eval_times_all)
 
 
-def solve(env, config, fa, agent, target_return, op, render=False):
+def solve(env, config, fa, agent, target_return, op, render=False, online=False):
 
     timesteps_elapsed = 0
     agent = agent(
@@ -172,6 +172,7 @@ def solve(env, config, fa, agent, target_return, op, render=False):
             env,
             agent,
             replay_buffer,
+            online=online,
             train=True,
             explore=True,
             render=False,              
@@ -189,6 +190,7 @@ def solve(env, config, fa, agent, target_return, op, render=False):
                 env,
                 agent,
                 replay_buffer,
+                online=online,
                 train=False,
                 explore=False,
                 render=render,
