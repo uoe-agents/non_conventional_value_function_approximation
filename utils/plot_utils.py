@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_returns(save_name: str, values: list, stds: list, xlabel: str, ylabel: str, legend_names: list, eval_freq: int, markers: list):
+def plot_returns(save_name: str, values: list, lower: list, upper: list, xlabel: str, ylabel: str, legend_names: list, eval_freq: int, markers: list):
     """
     Plot values with respect to timesteps
     
@@ -15,15 +15,19 @@ def plot_returns(save_name: str, values: list, stds: list, xlabel: str, ylabel: 
     plt.figure(figsize=(8,5))
     plt.rc('font', size=13)
     for i in range(len(values)):
-        plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}", marker=markers[i])
+        if markers is not None:
+            plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}", marker=markers[i])
+        else: 
+            plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}")
         plt.fill_between(
             x_values,
-            values[i] - stds[i],
-            values[i] + stds[i],
+            lower[i],
+            upper[i],
             alpha=0.2,
             antialiased=True,
         )
-    plt.xticks(eval_freq*2 + np.arange(len(values[0])/2) * eval_freq*2, rotation=30)
+    x_ticks = 2000 + np.arange(10) * 2000
+    plt.xticks(x_ticks, rotation=30)
     plt.legend(loc="lower right")
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

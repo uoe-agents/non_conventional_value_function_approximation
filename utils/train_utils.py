@@ -1,9 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 import time
-from copy import deepcopy
-
 from function_approximators.replay import ReplayBuffer
 
 
@@ -86,6 +83,9 @@ def train(env, config, fa, agent, output = True, render=False, online=False):
     start_time = time.time()
     losses_all = []
 
+    train_timesteps = []
+    train_returns = []
+
     with tqdm(total=config["max_timesteps"]) as pbar:
         
         while timesteps_elapsed < config["max_timesteps"]:
@@ -96,7 +96,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False):
                 break
             
             agent.schedule_hyperparameters(timesteps_elapsed, config["max_timesteps"])
-            episode_timesteps, _, losses = play_episode(
+            episode_timesteps, train_return, losses = play_episode(
                 env,
                 agent,
                 replay_buffer,
@@ -110,6 +110,10 @@ def train(env, config, fa, agent, output = True, render=False, online=False):
             )
             
             timesteps_elapsed += episode_timesteps
+
+            train_timesteps.append(timesteps_elapsed)
+            train_returns.append(train_return) 
+
             pbar.update(episode_timesteps)
             losses_all += losses   
 
@@ -136,13 +140,14 @@ def train(env, config, fa, agent, output = True, render=False, online=False):
                         f"Evaluation at timestep {timesteps_elapsed} returned a mean returns of {eval_returns}"
                     )
                     pbar.write(f"Epsilon = {agent.epsilon}")
-                    pbar.write(f"Support Points = {agent.X.shape[0]}")
+                    if online:
+                        pbar.write(f"Support Points = {agent.X.shape[0]}")
                     if not config["non_param"]:
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)                  
        
-    return np.array(eval_returns_all), np.array(eval_times_all)
+    return np.array(eval_returns_all), np.array(eval_times_all), np.array(train_returns), np.array(train_timesteps)
 
 
 def solve(env, config, fa, agent, target_return, op, render=False, online=False):
@@ -212,3 +217,44 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False)
             n=1
 
     return timesteps_elapsed, n_eps, n
+
+
+def train_time(env, config, fa, agent, online=False):
+
+    start_time = time.time()
+    
+    timesteps_elapsed = 0
+    agent = agent(
+        action_space = env.action_space, 
+        observation_space = env.observation_space,
+        fa=fa, 
+        **config
+    )
+    replay_buffer = ReplayBuffer(config["buffer_capacity"])
+   
+    with tqdm(total=config["max_timesteps"]) as pbar:
+    
+        while timesteps_elapsed < config["max_timesteps"]:
+            
+            agent.schedule_hyperparameters(timesteps_elapsed, config["max_timesteps"])
+            episode_timesteps, episode_returns, _ = play_episode(
+                env,
+                agent,
+                replay_buffer,
+                online=online,
+                train=True,
+                explore=True,
+                render=False,              
+                non_param = config["non_param"],
+                max_steps=config["episode_length"],
+                batch_size=config["batch_size"],
+            )
+
+            pbar.update(episode_timesteps)
+            
+            timesteps_elapsed += episode_timesteps
+            elapsed_seconds = time.time() - start_time
+    
+    print(episode_returns)
+
+    return elapsed_seconds
