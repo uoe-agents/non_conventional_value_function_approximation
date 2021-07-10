@@ -40,7 +40,7 @@ class SimpleGridworldEnv(gym.Env):
         self.S = (min(self.S[0], self.height - 1),
                   min(self.S[1], self.width - 1))
 
-        if self.S == (2, 4):
+        if self.S == (1, 4):
             return self._one_hot(self.S), -1, True, {}
         else:
             return self._one_hot(self.S), -1, False, {}
