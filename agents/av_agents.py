@@ -348,13 +348,13 @@ class eGaussianProccessAgent():
         out = []
         for i, f in enumerate(self.models):
             preds = f.predict(inputs, return_std=True)
-            out.append((preds[0]+self.epsilon*preds[1])*(i+1)/(sum(range(l+2))))
-        out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
+            out.append((preds[0]+self.epsilon*preds[1])*(i+1)/(sum(range(l+1))))
+        # out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
         return np.sum(out, 0)
 
     def act(self, obs, explore):
         
-        if explore and not self.fitted:
+        if not self.fitted:
             action = self.action_space.sample()
         elif explore:
             q_values = [self._predict_std(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
@@ -460,7 +460,8 @@ class OnlineGaussianProccessAgent():
     def update(self, obs, next_obs, reward, action, done):
         
         q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
-        Q = [q[0] + 2*q[1] for q in q_values]
+        # Q = [q[0] + 2*q[1] for q in q_values]
+        Q = [q[0] for q in q_values]
         Q_max = np.max(Q)
         x = np.concatenate([obs, self.encoded_actions[action]],-1).reshape(1,-1)
         Q_prev = self.model.predict(self.X, x).item()

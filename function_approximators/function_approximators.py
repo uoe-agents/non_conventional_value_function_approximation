@@ -216,13 +216,13 @@ class OnlineGaussianProcess():
     def _inc_dim_m(self, m):
         return np.pad(m, ((0,1),(0,1)))
 
-    def _dec_dim_v(self, v, index):
-        return np.delete(v, [index], axis=0)
+    # def _dec_dim_v(self, v, index):
+    #     return np.delete(v, [index], axis=0)
 
-    def _dec_dim_m(self, m, index):
-        m = np.delete(m, [index], axis=0)
-        m = np.delete(m, [index], axis=1)
-        return m
+    # def _dec_dim_m(self, m, index):
+    #     m = np.delete(m, [index], axis=0)
+    #     m = np.delete(m, [index], axis=1)
+    #     return m
 
     def update(self, X, x, y):
         k = self.kernel(x,x)
