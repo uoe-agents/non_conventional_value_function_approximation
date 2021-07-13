@@ -437,21 +437,17 @@ class OnlineGaussianProccessAgent():
 
     def act(self, obs, explore):
 
-        # if (explore and np.random.random_sample() < self.epsilon):
-        #     action = self.action_space.sample()
-        # else:       
-        #     Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
-        #     action = np.argmax(Q)
-        # return action
+#         if (explore and np.random.random_sample() < self.epsilon):
+#             action = self.action_space.sample()
+#         else:       
+#             Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+#             action = np.argmax(Q)
+#         return action
         
-        if (explore and np.random.random_sample() < self.epsilon):
-            action = self.action_space.sample()
-        # elif explore:
-        #     q_values = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
-        #     # print(q_values)
-        #     Q = [q[0] + 2*q[1] for q in q_values]
-        #     action = np.argmax(Q)
-        #     # print(action)
+        if explore:
+            q_values = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
+            Q = [q[0] + np.absolute(np.random.normal(q[0], q[1])-q[0]) for q in q_values]
+            action = np.argmax(Q)
         else:        
             Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
             action = np.argmax(Q)
@@ -460,8 +456,9 @@ class OnlineGaussianProccessAgent():
     def update(self, obs, next_obs, reward, action, done):
         
         q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
-        # Q = [q[0] + 2*q[1] for q in q_values]
-        Q = [q[0] for q in q_values]
+        Q = [q[0] + 2*q[1] for q in q_values]
+#         Q = [np.random.normal(q[0], q[1]) for q in q_values]
+#         Q = [q[0] for q in q_values]
         Q_max = np.max(Q)
         x = np.concatenate([obs, self.encoded_actions[action]],-1).reshape(1,-1)
         Q_prev = self.model.predict(self.X, x).item()
