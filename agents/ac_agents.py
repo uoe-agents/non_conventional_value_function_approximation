@@ -42,12 +42,9 @@ class Agent(ABC):
             action = self.action_space.sample()
         else:
             # Obtain the action values given the current observations from the Critics Network
-            actions = self.model(Tensor(obs))
+            q_values = self.model(Tensor(obs))
             # Select the action with the highest action value given the current observations
-            action = torch.argmax(actions).item()
-
-        # if self.update_counter % 1000 == 0:
-        #     print(action)
+            action = [torch.argmax(q_values).item()]
         
         return action
 
@@ -138,7 +135,6 @@ class DQNAgent(Agent):
             input_size = observation_space.shape[0]
 
         self.model = fa((input_size, *hidden_size, action_space.n))
-
 
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)

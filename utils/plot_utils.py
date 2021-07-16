@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_returns(save_name: str, values: list, lower: list, upper: list, xlabel: str, ylabel: str, legend_names: list, eval_freq: int, markers: list):
+def plot_returns(save_name: str, values: list, lower: list, upper: list, xlabel: str, ylabel: str, legend_names: list, eval_freq: int, markers: list, legend_outside=False):
     """
     Plot values with respect to timesteps
     
@@ -31,5 +31,7 @@ def plot_returns(save_name: str, values: list, lower: list, upper: list, xlabel:
     plt.legend(loc="lower right")
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    if legend_outside:
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
     plt.savefig(f"{save_name}.pdf", format="pdf", bbox_inches="tight")
