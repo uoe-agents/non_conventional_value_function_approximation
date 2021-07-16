@@ -183,20 +183,20 @@ class eGaussianProcess(NonParametricModel):
 
 class OnlineGaussianProcess():
 
-    def __init__(self, kernel, sigma_0, epsilon_tol, basis_limit):
+    def __init__(self, kernel, sigma_0, init, epsilon_tol, basis_limit):
 
         self.kernel = kernel
         self.epsilon_tol = epsilon_tol
         self.basis_limit = basis_limit
-        self.model = self.initialise(sigma_0)
+        self.model = self.initialise(sigma_0, init)
 
-    def initialise(self, sigma_0):
+    def initialise(self, sigma_0, init):
         self.sigma_0 = sigma_0
-        self.alpha = np.array([[1]])
-        self.C = np.array([[1]])
-        self.mew = 1
-        self.sigma = 1
-        self.r = 1
+        self.alpha = np.array([[init]])
+        self.C = np.array([[init]])
+        # self.mew = 0.1
+        # self.sigma = 0.1
+        # self.r = 0.1
         self.e = np.array([[1]])
         self.Q = np.array([[1]])
 
