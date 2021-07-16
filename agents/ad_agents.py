@@ -139,7 +139,6 @@ class DQNAgent(Agent):
 
         self.model = fa((input_size, *hidden_size, action_space.n))
 
-
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
         self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
@@ -330,28 +329,28 @@ class OnlineGaussianProccessAgent():
 
     def act(self, obs, explore):
 
-#         if (explore and np.random.random_sample() < self.epsilon):
-#             action = self.action_space.sample()
-#         else:       
-#             Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
-#             action = np.argmax(Q)
-#         return action
-        
-        if explore:
-            q_values = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
-            Q = [q[0] + np.absolute(np.random.normal(q[0], q[1])-q[0]) for q in q_values]
-            action = np.argmax(Q)
-        else:        
+        if (explore and np.random.random_sample() < self.epsilon):
+            action = self.action_space.sample()
+        else:       
             Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
             action = np.argmax(Q)
-        return action    
+        return action
+        
+        # if explore:
+        #     q_values = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
+        #     Q = [q[0] + np.absolute(np.random.normal(q[0], q[1])-q[0]) for q in q_values]
+        #     action = np.argmax(Q)
+        # else:        
+        #     Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+        #     action = np.argmax(Q)
+        # return action    
     
     def update(self, obs, next_obs, reward, action, done):
         
         q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
         Q = [q[0] + 2*q[1] for q in q_values]
-#         Q = [np.random.normal(q[0], q[1]) for q in q_values]
-#         Q = [q[0] for q in q_values]
+        # Q = [np.random.normal(q[0], q[1]) for q in q_values]
+        # Q = [q[0] for q in q_values]
         Q_max = np.max(Q)
         x = np.concatenate([obs, self.encoded_actions[action]],-1).reshape(1,-1)
         Q_prev = self.model.predict(self.X, x).item()
