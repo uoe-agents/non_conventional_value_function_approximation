@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_returns(save_name: str, values: list, lower: list, upper: list, xlabel: str, ylabel: str, legend_names: list, eval_freq: int, markers: list, legend_outside=False):
+def plot_returns(save_name: str, values: list, lower: list, upper: list, colours: list, xlabel: str, ylabel: str, legend_names: list, tick_freq:int, eval_freq: int, markers: list, legend_outside=False):
     """
     Plot values with respect to timesteps
     
@@ -16,17 +16,18 @@ def plot_returns(save_name: str, values: list, lower: list, upper: list, xlabel:
     plt.rc('font', size=13)
     for i in range(len(values)):
         if markers is not None:
-            plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}", marker=markers[i])
+            plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}", marker=markers[i], color=colours[i])
         else: 
-            plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}")
+            plt.plot(x_values, values[i], "-", alpha=0.7, label=f"{legend_names[i]}", color=colours[i])
         plt.fill_between(
             x_values,
             lower[i],
             upper[i],
             alpha=0.2,
             antialiased=True,
+            color = colours[i]
         )
-    x_ticks = 2000 + np.arange(10) * 2000
+    x_ticks = tick_freq*2 + np.arange(10) * tick_freq*2
     plt.xticks(x_ticks, rotation=30)
     plt.legend(loc="lower right")
     plt.xlabel(xlabel)
@@ -34,4 +35,4 @@ def plot_returns(save_name: str, values: list, lower: list, upper: list, xlabel:
     if legend_outside:
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    plt.savefig(f"{save_name}.pdf", format="pdf", bbox_inches="tight")
+    plt.savefig(f"{save_name}.png", format="pdf", bbox_inches="tight")
