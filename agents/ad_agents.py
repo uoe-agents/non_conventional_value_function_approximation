@@ -316,7 +316,12 @@ class OnlineGaussianProccessAgent():
         self.encoded_actions = self._encode_actions()
         self.model = fa(**model_params)
 
-        self.X = np.zeros((1, self.observation_space.shape[0] + self.action_space.n))
+        if observation_space.shape == ():
+            input_size = observation_space.n
+        else:
+            input_size = observation_space.shape[0]
+        
+        self.X = np.zeros((1, input_size + self.action_space.n))
     
     def _one_hot(self, length, index):
         vector = np.zeros(length)
