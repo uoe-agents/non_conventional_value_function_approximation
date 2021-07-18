@@ -35,4 +35,4 @@ def plot_returns(save_name: str, values: list, lower: list, upper: list, colours
     if legend_outside:
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    plt.savefig(f"{save_name}.png", format="pdf", bbox_inches="tight")
+    plt.savefig(f"{save_name}.pdf", format="pdf", bbox_inches="tight")
