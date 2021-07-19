@@ -105,7 +105,7 @@ def play_episode(
     return episode_timesteps, episode_return, losses
 
 
-def train(env, config, fa, agent, output = True, render=False, online=False):
+def train(env, config, fa, agent, output = True, render=False, online=False, threshold=0):
 
     timesteps_elapsed = 0
     agent = agent(
@@ -114,7 +114,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False):
         fa=fa, 
         **config
     )
-    replay_buffer = ReplayBuffer(config["buffer_capacity"])
+    replay_buffer = ReplayBuffer(config["buffer_capacity"], threshold)
 
     eval_returns_all = []
     eval_times_all = []
