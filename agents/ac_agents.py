@@ -33,19 +33,21 @@ class Agent(ABC):
         self.gamma = gamma
         self.epsilon = epsilon
         self.update_counter = 0
-
+        self.tiles = np.linspace(action_space.low.item()+0.2, action_space.high.item()-0.2, 10)
+    
+    def _action_to_idx(self, action):   
+        return np.digitize(action, self.tiles)
 
     def act(self, obs, explore):
         
         if explore and np.random.random_sample() < self.epsilon:
             # Sample a random action from the action space
-            action = self.action_space.sample()
+            action = self._action_to_idx(self.action_space.sample().item())
         else:
             # Obtain the action values given the current observations from the Critics Network
             q_values = self.model(Tensor(obs))
             # Select the action with the highest action value given the current observations
-            action = [torch.argmax(q_values).item()]
-        
+            action = torch.argmax(q_values).item()
         return action
 
 
@@ -134,7 +136,8 @@ class DQNAgent(Agent):
         else:
             input_size = observation_space.shape[0]
 
-        self.model = fa((input_size, *hidden_size, action_space.n))
+        self.n_actions = 11
+        self.model = fa((input_size, *hidden_size, self.n_actions))
 
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
@@ -180,7 +183,8 @@ class LinearAgent(Agent):
         else:
             input_size = observation_space.shape[0]
 
-        self.model = fa(input_size, action_space.n, poly_degree)
+        self.n_actions = 11
+        self.model = fa(input_size, self.n_actions, poly_degree)
         
         if torch.cuda.is_available():
             self.model.cuda()
@@ -221,11 +225,12 @@ class FQIAgent():
 
         self.step_counter = 0
         self.fitted = False
+        self.n_actions = 11
         self.encoded_actions = self._encode_actions()
 
         self.model = fa(**model_params)
         self.models = deque([self.model], maxlen=model_save_capacity)
-
+        self.tiles = np.linspace(action_space.low.item()+0.2, action_space.high.item()-0.2, 10)
 
     def _one_hot(self, length, index):
         vector = np.zeros(length)
@@ -233,7 +238,7 @@ class FQIAgent():
         return list(vector)
 
     def _encode_actions(self):
-        length = self.action_space.n
+        length = self.n_actions
         return [self._one_hot(length, i) for i in range(length)] 
 
     def _predict(self, inputs):
@@ -243,12 +248,15 @@ class FQIAgent():
             out.append(f.predict(inputs)*(i+1)/(sum(range(l+1))))
         # out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
         return np.sum(out, 0)
+  
+    def _action_to_idx(self, action):   
+        return np.digitize(action, self.tiles)
 
     def act(self, obs, explore):
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
-            action = self.action_space.sample()
+            action = self._action_to_idx(self.action_space.sample().item())
         else:       
-            Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.n_actions)]
             action = np.argmax(Q)
         return action
 
@@ -260,7 +268,7 @@ class FQIAgent():
             inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
             preds = []
             
-            for i in range(self.action_space.n):
+            for i in range(self.n_actions):
                 next_inputs = np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + self.encoded_actions[i]], -1)
                 preds.append(self._predict(next_inputs))
             
@@ -318,7 +326,9 @@ class OnlineGaussianProccessAgent():
         else:
             input_size = observation_space.shape[0]
         
-        self.X = np.zeros((1, input_size + self.action_space.n))
+        self.n_actions = 11
+        self.X = np.zeros((1, input_size + self.n_actions))
+        self.tiles = np.linspace(action_space.low.item()+0.2, action_space.high.item()-0.2, 10)
     
     def _one_hot(self, length, index):
         vector = np.zeros(length)
@@ -329,10 +339,13 @@ class OnlineGaussianProccessAgent():
         length = self.action_space.n
         return [self._one_hot(length, i) for i in range(length)] 
 
+    def _action_to_idx(self, action):   
+        return np.digitize(action, self.tiles)
+  
     def act(self, obs, explore):
 
         if (explore and np.random.random_sample() < self.epsilon):
-            action = self.action_space.sample()
+            action = self._action_to_idx(self.action_space.sample())
         else:       
             Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
             action = np.argmax(Q)
@@ -351,7 +364,7 @@ class OnlineGaussianProccessAgent():
     
     def update(self, obs, next_obs, reward, action, done):
         
-        q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
+        q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.n_actions)]
         Q = [q[0] + 2*q[1] for q in q_values]
         # Q = [np.random.normal(q[0], q[1]) for q in q_values]
         # Q = [q[0] for q in q_values]

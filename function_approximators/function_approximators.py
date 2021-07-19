@@ -21,7 +21,6 @@ class ParametricModel(nn.Module):
         for param, target_param in zip(self.parameters(), target_net.parameters()):
             param.data.copy_(target_param.data)
 
-
 class NeuralNetwork(ParametricModel):
 
     def __init__(self, layer_dims):
@@ -44,7 +43,6 @@ class NeuralNetwork(ParametricModel):
     def forward(self, x): 
         return self.model(x)
 
-
 class LinearModel(ParametricModel):
 
     def __init__(self, input_dim, output_dim, poly_degree=1, tiling_specs=None):
@@ -57,12 +55,12 @@ class LinearModel(ParametricModel):
         elif poly_degree>1: 
             self.poly=True
             k=1
-        self.model = nn.Linear(input_dim**poly_degree*k+input_dim, output_dim)    
-
-    def _polynomial_features_1(self, x):
-        return torch.cat([x ** i for i in range(1, self.poly_degree+1)], -1)
+        self.model = nn.Linear(input_dim**poly_degree*k + input_dim, output_dim)    
 
     def _polynomial_features_2(self, x):
+        return torch.cat([x ** i for i in range(1, self.poly_degree+1)], -1)
+
+    def _polynomial_features(self, x):
         
         if len(x.size()) == 2:
             f = []
@@ -76,12 +74,10 @@ class LinearModel(ParametricModel):
               
     def forward(self, x): 
         
-        # return self.model(self._tiling_features(x, self.lows, self.highs, self.specs))
         if self.poly:
-            return self.model(self._polynomial_features_2(x))
+            return self.model(self._polynomial_features(x))
         else:
             return self.model(x)
-
 
 class NonParametricModel():
    
@@ -90,7 +86,6 @@ class NonParametricModel():
 
     def fit(self, inputs, outputs):
         self.model.fit(inputs, outputs)
-
 
 class DecisionTree(NonParametricModel):
 
@@ -110,8 +105,6 @@ class DecisionTree(NonParametricModel):
         # Draw graph
         graph = graphviz.Source(dot_data, format="png") 
         graph.render(plot_name)
-
-
 
 class RandomForest(NonParametricModel):
 
@@ -179,7 +172,6 @@ class eGaussianProcess(NonParametricModel):
 
     def predict(self, inputs, return_std=False):
         return self.model.predict(inputs, return_std=return_std)
-
 
 class OnlineGaussianProcess():
 
