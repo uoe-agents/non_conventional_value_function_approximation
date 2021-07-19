@@ -2,7 +2,8 @@ import numpy as np
 from tqdm import tqdm
 import time
 from function_approximators.replay import ReplayBuffer
-
+import matplotlib.pyplot as plt
+from IPython import display
 
 def play_episode(
     env,
@@ -32,46 +33,37 @@ def play_episode(
         action = agent.act(obs, explore=explore)
         next_obs, reward, done, _ = env.step(action) 
            
-        # if train:
-            # reward += np.absolute(next_obs[0])
+        if train:
+            reward += np.absolute(next_obs[0])
 
             # if next_obs[0] < -1:
-            #     reward += 0.4
+            #     reward += 0.1
             # if next_obs[0] < -0.9:
-            #     reward += 0.3
+            #     reward += 0.1
             # if next_obs[0] < -0.8:
-            #     reward += 0.2
+            #     reward += 0.1
             # if next_obs[0] < -0.7:
             #     reward += 0.1
 
-            # if next_obs[0] > -0.3:
-            #     reward += 0.1
-            # if next_obs[0] > -0.2:
-            #     reward += 0.2
-            # if next_obs[0] > -0.1:
-            #     reward += 0.3           
-            # if next_obs[0] > 0:
-            #     reward += 0.4
-            # if next_obs[0] > 0.1:
-            #     reward += 0.5
-            # if next_obs[0] > 0.2:
-            #     reward += 0.6
-            # if next_obs[0] > 0.3:
-            #     reward += 0.7
-            # if next_obs[0] > 0.4:
-            #     reward += 0.8
+            if next_obs[0] > -0.3:
+                reward += 0.1
+            if next_obs[0] > -0.2:
+                reward += 0.1
+            if next_obs[0] > -0.1:
+                reward += 0.1           
+            if next_obs[0] > 0:
+                reward += 0.1
+            if next_obs[0] > 0.1:
+                reward += 0.1
+            if next_obs[0] > 0.2:
+                reward += 0.1
+            if next_obs[0] > 0.3:
+                reward += 0.1
+            if next_obs[0] > 0.4:
+                reward += 0.1
             
-            # if done:
-            #     reward += 10
-
-            # if obs[1] < 0.02 and obs[0] > obs[1]:
-            #     reward += 0.5
-
-            # if obs[1] < -0.02 and obs[1] > obs[0]:
-            #     reward += 0.5
-
-            # if obs[1] > 0.02 and obs[0] < obs[1]:
-            #     reward += 0.5
+            if done:
+                reward += 10
 
             # if np.absolute(next_obs[1]) > np.absolute(obs[1]):
             #     reward += 0.1
