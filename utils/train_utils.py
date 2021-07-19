@@ -56,7 +56,7 @@ def play_episode(
             if next_obs[0] > 0.1:
                 reward += 0.1
             if next_obs[0] > 0.2:
-                reward += 0.1
+                reward += 1
             if next_obs[0] > 0.3:
                 reward += 0.1
             if next_obs[0] > 0.4:
