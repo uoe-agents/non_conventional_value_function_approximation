@@ -33,37 +33,38 @@ def play_episode(
         action = agent.act(obs, explore=explore)
         next_obs, reward, done, _ = env.step(action) 
            
-        if train:
-            reward += np.absolute(next_obs[0])
+        # if train:
+        #     reward += np.absolute(next_obs[0])
 
-            # if next_obs[0] < -1:
-            #     reward += 0.1
-            # if next_obs[0] < -0.9:
-            #     reward += 0.1
-            # if next_obs[0] < -0.8:
-            #     reward += 0.1
-            # if next_obs[0] < -0.7:
-            #     reward += 0.1
-
-            if next_obs[0] > -0.3:
-                reward += 0.1
-            if next_obs[0] > -0.2:
-                reward += 0.1
-            if next_obs[0] > -0.1:
-                reward += 0.1           
-            if next_obs[0] > 0:
-                reward += 0.1
-            if next_obs[0] > 0.1:
-                reward += 0.1
-            if next_obs[0] > 0.2:
-                reward += 0.1
-            if next_obs[0] > 0.3:
-                reward += 0.1
-            if next_obs[0] > 0.4:
-                reward += 0.1
+        #     # if next_obs[0] < -1:
+        #     #     reward += 0.1
+        #     # if next_obs[0] < -0.9:
+        #     #     reward += 0.1
+        #     # if next_obs[0] < -0.8:
+        #     #     reward += 0.1
+        #     # if next_obs[0] < -0.7:
+        #     #     reward += 0.1
+        #     if next_obs[0] > -0.4:
+        #         reward += 0.1
+        #     if next_obs[0] > -0.3:
+        #         reward += 0.1
+        #     if next_obs[0] > -0.2:
+        #         reward += 0.1
+        #     if next_obs[0] > -0.1:
+        #         reward += 0.1           
+        #     if next_obs[0] > 0:
+        #         reward += 1
+        #     if next_obs[0] > 0.1:
+        #         reward += 0.1
+        #     if next_obs[0] > 0.2:
+        #         reward += 2
+        #     if next_obs[0] > 0.3:
+        #         reward += 0.1
+        #     if next_obs[0] > 0.4:
+        #         reward += 0.1
             
-            if done:
-                reward += 10
+        #     if done:
+        #         reward += 10
 
             # if np.absolute(next_obs[1]) > np.absolute(obs[1]):
             #     reward += 0.1
@@ -80,7 +81,8 @@ def play_episode(
                 np.array([done], dtype=np.float32),
             )
             if len(replay_buffer) >= batch_size:
-                batch = replay_buffer.sample(batch_size)
+                batch = replay_buffer.sample(replay_buffer.count)
+                # batch = replay_buffer.sample(batch_size)
                 if non_param:
                     if not agent.fitted:
                         agent.initial_fit(batch)
@@ -105,7 +107,7 @@ def play_episode(
     return episode_timesteps, episode_return, losses
 
 
-def train(env, config, fa, agent, output = True, render=False, online=False, threshold=0):
+def train(env, config, fa, agent, output = True, render=False, online=False, threshold=-1):
 
     timesteps_elapsed = 0
     agent = agent(
@@ -183,6 +185,8 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                         pbar.write(f"Support Points = {agent.X.shape[0]}")
                     if not config["non_param"]:
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
+                    if threshold > -1:
+                        pbar.write(f"Replay Buffer count: {replay_buffer.count}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)                  
        

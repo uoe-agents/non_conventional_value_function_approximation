@@ -93,6 +93,18 @@ class WindyGridworldEnv(gym.Env):
 
         if self.S == (3, 7):
             return self._one_hot(self.S), -1, True, {}
+        # elif self.S == (0, 9):
+        #     return self._one_hot(self.S), -0.99, False, {}
+        # elif self.S == (1, 9):
+        #     return self._one_hot(self.S), -0.99, False, {}
+        # elif self.S == (2, 9):
+        #     return self._one_hot(self.S), -0.99, False, {}
+        # elif self.S == (3, 9):
+            # return self._one_hot(self.S), -0.99, False, {}
+        elif self.S == (4, 9):
+            return self._one_hot(self.S), -0.999, False, {}
+        # elif self.S == (4, 8):
+        #     return self._one_hot(self.S), -0.99, False, {}
         else:
             return self._one_hot(self.S), -1, False, {}
 
