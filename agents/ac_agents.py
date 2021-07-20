@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 
 
-class Agent(ABC):
+class ParametricAgent(ABC):
 
     def __init__(
         self,
@@ -24,6 +24,7 @@ class Agent(ABC):
         gamma: float,
         epsilon: float,
         target_update_freq: int,
+        n_actions: int,
     ):
 
         self.action_space = action_space
@@ -33,30 +34,37 @@ class Agent(ABC):
         self.gamma = gamma
         self.epsilon = epsilon
         self.update_counter = 0
-        self.tiles = np.linspace(action_space.low.item()+0.2, action_space.high.item()-0.2, 10)
+
+        low = action_space.low.item()
+        high = action_space.high.item()
+        diff = high - low 
+        self.tiles = np.linspace(low + diff/((n_actions-1)*2), high - diff/((n_actions-1)*2), n_actions-1)
+        self.n_actions = n_actions
+        self.actions = np.linspace(low, high, n_actions)
     
-    def _action_to_idx(self, action):   
-        return np.digitize(action, self.tiles)
+    def _actions_to_idx(self, actions):   
+        return np.digitize(actions, self.tiles)
 
     def act(self, obs, explore):
         
         if explore and np.random.random_sample() < self.epsilon:
             # Sample a random action from the action space
-            action = self._action_to_idx(self.action_space.sample().item())
+            action = self._actions_to_idx(self.action_space.sample().item())
         else:
             # Obtain the action values given the current observations from the Critics Network
             q_values = self.model(Tensor(obs))
             # Select the action with the highest action value given the current observations
             action = torch.argmax(q_values).item()
-        return action
+        return self.actions[int(action)]
 
 
     def update(self, batch):
 
         # Obtain the action values given the current states in the batch from critics network
-        Q = self.model(batch.states)   
+        Q = self.model(batch.states) 
+        action_indices = Tensor(self._actions_to_idx(batch.actions))
         # Obtain the action values of the actions selected in the batch
-        q_current = Q.gather(1, batch.actions.long())
+        q_current = Q.gather(1, action_indices.long())
 
         # Obtain the action values given the next states in the batch from critics_target network
         Q_next = self.target_model(batch.next_states)
@@ -101,7 +109,7 @@ class Agent(ABC):
         return {"q_loss": q_loss.item()}
 
 
-class DQNAgent(Agent):
+class DQNAgent(ParametricAgent):
 
     def __init__(self,
         action_space: gym.Space,
@@ -116,7 +124,8 @@ class DQNAgent(Agent):
         max_deduct: float,
         decay: float,
         lr_step_size: int,
-        lr_gamma: float, 
+        lr_gamma: float,
+        n_actions: int, 
         **kwargs
     ):
         
@@ -125,7 +134,8 @@ class DQNAgent(Agent):
             observation_space,
             gamma,
             epsilon,
-            target_update_freq
+            target_update_freq,
+            n_actions,
         )
 
         self.max_deduct = max_deduct
@@ -136,7 +146,6 @@ class DQNAgent(Agent):
         else:
             input_size = observation_space.shape[0]
 
-        self.n_actions = 11
         self.model = fa((input_size, *hidden_size, self.n_actions))
 
         self.target_model = deepcopy(self.model)
@@ -147,7 +156,7 @@ class DQNAgent(Agent):
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
-class LinearAgent(Agent):
+class LinearAgent(ParametricAgent):
 
     def __init__(self,
         action_space: gym.Space,
