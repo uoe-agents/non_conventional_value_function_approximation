@@ -18,6 +18,7 @@ class ReplayBuffer:
         self.memory = None
         self.count = 0
         self.threshold = threshold
+        
 
     def __len__(self): 
 
@@ -28,6 +29,8 @@ class ReplayBuffer:
         self.memory = Transition(
             *[np.zeros([self.capacity, elem.size], dtype=elem.dtype) for elem in transition]
         )
+        self.m = transition[0].shape[0] + transition[1].shape[0]
+        self.matrix = np.zeros((1, self.m))
 
     def push(self, *args):
 
@@ -41,9 +44,12 @@ class ReplayBuffer:
         assert transition.states.size == transition.next_states.size
         assert transition.rewards.size == 1
         
-        # initialise replay buffer
         if not self.memory:
             self.init_memory(transition)
+        
+        # initialise replay buffer
+        if self.threshold <= -1:
+        
             # push transition in replay buffer
             index = self.count % self.capacity
             for i, arg in enumerate(args):
@@ -53,21 +59,20 @@ class ReplayBuffer:
             self.count += 1
 
         else:
-            a = np.concatenate((args[0], args[1], args[2]))
-            # print(a)
-            distances = []
-            for i in range(self.count):
-                b = np.concatenate((self.memory[0][i], self.memory[1][i], self.memory[2][i]))
-                distances.append(dist.euclidean(a,b))
+            a = np.concatenate((args[0], args[1])).reshape(1,self.m)
+            distances = dist.cdist(a,self.matrix,'euclidean')
             
-            if min(distances) > self.threshold:
+            if np.min(distances) > self.threshold:
+                n = int(self.count/50+1) 
+                self.matrix = np.concatenate((self.matrix, a), axis=0)
                 # push transition in replay buffer
-                index = self.count % self.capacity
-                for i, arg in enumerate(args):
-                    self.memory[i][index, :] = arg
+                for _ in range(10):
+                    index = self.count % self.capacity
+                    for i, arg in enumerate(args):
+                        self.memory[i][index, :] = arg
 
-                # update count
-                self.count += 1
+                    # update count
+                    self.count += 1
 
     def sample(self, batch_size, device = "cpu"):
 
