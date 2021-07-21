@@ -66,7 +66,7 @@ class ReplayBuffer:
                 n = int(self.count/50+1) 
                 self.matrix = np.concatenate((self.matrix, a), axis=0)
                 # push transition in replay buffer
-                for _ in range(10):
+                for _ in range(1):
                     index = self.count % self.capacity
                     for i, arg in enumerate(args):
                         self.memory[i][index, :] = arg
