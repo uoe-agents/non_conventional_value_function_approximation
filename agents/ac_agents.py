@@ -173,6 +173,7 @@ class LinearAgent(ParametricAgent):
         decay: float,
         lr_step_size: int,
         lr_gamma: float,
+        n_actions: int,
         **kwargs
     ):
         
@@ -181,7 +182,8 @@ class LinearAgent(ParametricAgent):
             observation_space,
             gamma,
             epsilon,
-            target_update_freq
+            target_update_freq,
+            n_actions
         )
 
         self.max_deduct = max_deduct
@@ -192,7 +194,6 @@ class LinearAgent(ParametricAgent):
         else:
             input_size = observation_space.shape[0]
 
-        self.n_actions = 11
         self.model = fa(input_size, self.n_actions, poly_degree)
         
         if torch.cuda.is_available():
@@ -220,6 +221,7 @@ class FQIAgent():
         model_save_freq: int,
         model_save_capacity: int,
         model_params, 
+        n_actions: int,
         **kwargs
     ):
 
@@ -234,21 +236,27 @@ class FQIAgent():
 
         self.step_counter = 0
         self.fitted = False
-        self.n_actions = 11
-        self.encoded_actions = self._encode_actions()
+
+        # self.encoded_actions = self._encode_actions()
 
         self.model = fa(**model_params)
         self.models = deque([self.model], maxlen=model_save_capacity)
-        self.tiles = np.linspace(action_space.low.item()+0.2, action_space.high.item()-0.2, 10)
+        
+        low = action_space.low.item()
+        high = action_space.high.item()
+        diff = high - low 
+        self.tiles = np.linspace(low + diff/((n_actions-1)*2), high - diff/((n_actions-1)*2), n_actions-1)
+        self.n_actions = n_actions
+        self.actions = np.linspace(low, high, n_actions)
 
     def _one_hot(self, length, index):
         vector = np.zeros(length)
         vector[index]=int(1)
         return list(vector)
 
-    def _encode_actions(self):
-        length = self.n_actions
-        return [self._one_hot(length, i) for i in range(length)] 
+    # def _encode_actions(self):
+    #     length = self.n_actions
+    #     return [self._one_hot(length, i) for i in range(length)] 
 
     def _predict(self, inputs):
         l = len(self.models)
@@ -263,10 +271,15 @@ class FQIAgent():
 
     def act(self, obs, explore):
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
-            action = self._action_to_idx(self.action_space.sample().item())
+            # action = self._action_to_idx(self.action_space.sample().item())
+            action = self.action_space.sample().item()
         else:       
-            Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.n_actions)]
-            action = np.argmax(Q)
+            Q = [self._predict(np.concatenate([obs, [a]],-1).reshape(1,-1)) for a in self.actions]
+            action = np.max(Q)
+            # if self.step_counter % 100 == 0:
+            #     print(obs)
+            #     print(Q)
+            #     print(action)
         return action
 
     def update(self, batch):
@@ -274,29 +287,28 @@ class FQIAgent():
         
         if self.step_counter % self.update_freq == 0:
             
-            inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
-            preds = []
-            
-            for i in range(self.n_actions):
-                next_inputs = np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + self.encoded_actions[i]], -1)
-                preds.append(self._predict(next_inputs))
-            
-            preds = np.array(preds).T
-            outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
-            # print(inputs)
-            # print(outputs[0])
+            inputs = np.concatenate([batch.states, batch.actions], -1)
+            Q_next = [self._predict(np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + a], -1)) for a in self.actions]  
+            # print(np.argmax(Q_next, 0))      
+            outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(Q_next, 0).reshape(-1,1)).reshape(-1)             
             self.model.fit(inputs, outputs) 
 
             # check for update condition
             if self.step_counter % self.model_save_freq == 0:
                 # if update condition is met, save current model
                 self.models.append(deepcopy(self.model))
-        
+
+            # if self.step_counter % 1000 == 0: 
+            #     print(f"Inputs: {inputs}")
+            #     print(f"Q_next: {Q_next[0]}")
+            #     print(f"Q_next: {Q_next[1]}")
+            #     print(f"Q_next_max: {np.max(Q_next, 0)}")
+            #     print(f"Outputs: {outputs}")
         else:
             pass
 
     def initial_fit(self, batch):
-        inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
+        inputs = np.concatenate([batch.states, batch.actions], -1)
         outputs = np.array(batch.rewards).reshape(-1)
         self.model.fit(inputs, outputs)
         self.fitted = True
