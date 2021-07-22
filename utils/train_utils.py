@@ -81,8 +81,8 @@ def play_episode(
                 np.array([done], dtype=np.float32),
             )
             if len(replay_buffer) >= batch_size:
-                batch = replay_buffer.sample(replay_buffer.count)
-                # batch = replay_buffer.sample(batch_size)
+                # batch = replay_buffer.sample(replay_buffer.count)
+                batch = replay_buffer.sample(batch_size)
                 if non_param:
                     if not agent.fitted:
                         agent.initial_fit(batch)
@@ -193,7 +193,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
     return np.array(eval_returns_all), np.array(eval_times_all), np.array(train_returns), np.array(train_timesteps)
 
 
-def solve(env, config, fa, agent, target_return, op, render=False, online=False):
+def solve(env, config, fa, agent, target_return, op, render=False, online=False, threshold=-1):
 
     timesteps_elapsed = 0
     agent = agent(
@@ -202,7 +202,7 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False)
         fa=fa, 
         **config
     )
-    replay_buffer = ReplayBuffer(config["buffer_capacity"])
+    replay_buffer = ReplayBuffer(config["buffer_capacity"], threshold)
     n_eps = 0
 
     start_time = time.time()
@@ -262,7 +262,7 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False)
     return timesteps_elapsed, n_eps, n
 
 
-def train_time(env, config, fa, agent, online=False):
+def train_time(env, config, fa, agent, online=False, threshold=-1):
 
     start_time = time.time()
     
@@ -273,7 +273,7 @@ def train_time(env, config, fa, agent, online=False):
         fa=fa, 
         **config
     )
-    replay_buffer = ReplayBuffer(config["buffer_capacity"])
+    replay_buffer = ReplayBuffer(config["buffer_capacity"], threshold)
    
     with tqdm(total=config["max_timesteps"]) as pbar:
     
