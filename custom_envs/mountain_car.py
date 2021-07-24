@@ -96,34 +96,6 @@ class MountainCarEnv(gym.Env):
         )
         reward = -1.0
         
-        # if position < -1:
-        #     reward += 5
-        # if position < -0.9:
-        #     reward += 0.3
-        # if position < -0.8:
-        #     reward += 0.2
-        # if position < -0.7:
-        #     reward += 0.1
-
-        # if position > -0.3:
-        #     reward += 0.1
-        # if position > -0.2:
-        #     reward += 0.2
-        # if position > -0.1:
-        #     reward += 0.3           
-        # if position > 0:
-        #     reward += 0.4
-        # if position > 0.1:
-        #     reward += 0.5
-        # if position > 0.2:
-        #     reward += 0.6
-        # if position > 0.3:
-        #     reward += 0.7
-        # if position > 0.4:
-        #     reward += 0.8
-        # if done:
-        #     reward += 10
-
         self.state = (position, velocity)
         return np.array(self.state), reward, done, {}
 

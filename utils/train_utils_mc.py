@@ -44,20 +44,20 @@ def play_episode(
             #     reward += 0.1
             # if next_obs[0] < -0.7:
             #     reward += 0.1
-            if next_obs[0] > -0.4:
-                reward += 0.1
-            if next_obs[0] > -0.3:
-                reward += 0.1
-            if next_obs[0] > -0.2:
-                reward += 0.1
-            if next_obs[0] > -0.1:
-                reward += 0.1           
+            # if next_obs[0] > -0.4:
+            #     reward += 0.1
+            # if next_obs[0] > -0.3:
+            #     reward += 0.1
+            # if next_obs[0] > -0.2:
+            #     reward += 0.1
+            # if next_obs[0] > -0.1:
+            #     reward += 0.1           
             if next_obs[0] > 0:
                 reward += 1
             if next_obs[0] > 0.1:
                 reward += 0.1
             if next_obs[0] > 0.2:
-                reward += 2
+                reward += 0.1
             if next_obs[0] > 0.3:
                 reward += 0.1
             if next_obs[0] > 0.4:
@@ -81,8 +81,8 @@ def play_episode(
                 np.array([done], dtype=np.float32),
             )
             if len(replay_buffer) >= batch_size:
-                batch = replay_buffer.sample(replay_buffer.count)
-                # batch = replay_buffer.sample(batch_size)
+                # batch = replay_buffer.sample(replay_buffer.count)
+                batch = replay_buffer.sample(batch_size)
                 if non_param:
                     if not agent.fitted:
                         agent.initial_fit(batch)

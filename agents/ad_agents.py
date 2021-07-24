@@ -251,8 +251,8 @@ class FQIAgent():
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
             action = self.action_space.sample()
         else:       
-            Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
-            # Q = [self.model.predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            # Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            Q = [self.model.predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
             action = np.argmax(Q)
         
             # if self.step_counter % 100 == 0:
@@ -272,8 +272,8 @@ class FQIAgent():
             
             for i in range(self.action_space.n):
                 next_inputs = np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + self.encoded_actions[i]], -1)
-                # preds.append(self.model.predict(next_inputs))
-                preds.append(self._predict(next_inputs))
+                preds.append(self.model.predict(next_inputs))
+                # preds.append(self._predict(next_inputs))
             
             preds = np.array(preds).T
             outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
