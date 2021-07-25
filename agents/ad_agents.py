@@ -243,8 +243,8 @@ class FQIAgent():
         l = len(self.models)
         out = []
         for i, f in enumerate(self.models):
-            out.append(f.predict(inputs)*(i+1)/(sum(range(l+1))))
-        # out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
+            out.append(f.predict(inputs)*(i+1)/(sum(range(l+2))))
+        out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
         return np.sum(out, 0)
 
     def act(self, obs, explore):
