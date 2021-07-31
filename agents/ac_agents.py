@@ -274,7 +274,8 @@ class FQIAgent():
             # action = self._action_to_idx(self.action_space.sample().item())
             action = self.action_space.sample().item()
         else:       
-            Q = [self._predict(np.concatenate([obs, [a]],-1).reshape(1,-1)) for a in self.actions]
+            # Q = [self._predict(np.concatenate([obs, [a]],-1).reshape(1,-1)) for a in self.actions]
+            Q = [self.model.predict(np.concatenate([obs, [a]],-1).reshape(1,-1)) for a in self.actions]
             action = np.max(Q)
             # if self.step_counter % 100 == 0:
             #     print(obs)
@@ -288,7 +289,8 @@ class FQIAgent():
         if self.step_counter % self.update_freq == 0:
             
             inputs = np.concatenate([batch.states, batch.actions], -1)
-            Q_next = [self._predict(np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + a], -1)) for a in self.actions]  
+            # Q_next = [self._predict(np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + a], -1)) for a in self.actions] 
+            Q_next = [self.model.predict(np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + a], -1)) for a in self.actions] 
             # print(np.argmax(Q_next, 0))      
             outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(Q_next, 0).reshape(-1,1)).reshape(-1)             
             self.model.fit(inputs, outputs) 

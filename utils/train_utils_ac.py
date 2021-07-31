@@ -39,7 +39,8 @@ def play_episode(
                 np.array([done], dtype=np.float32),
             )
             if len(replay_buffer) >= batch_size:
-                batch = replay_buffer.sample(batch_size)
+                # batch = replay_buffer.sample(batch_size)
+                batch = replay_buffer.sample(replay_buffer.count)
                 if non_param:
                     if not agent.fitted:
                         agent.initial_fit(batch)
@@ -142,6 +143,8 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                         pbar.write(f"Support Points = {agent.X.shape[0]}")
                     if not config["non_param"]:
                         pbar.write(f"Learning rate = {agent.model_optim.param_groups[0]['lr']}")
+                    if threshold > -1:
+                        pbar.write(f"Replay Buffer count: {replay_buffer.count}")
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)                  
        
