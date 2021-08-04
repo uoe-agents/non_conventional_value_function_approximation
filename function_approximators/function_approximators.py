@@ -9,6 +9,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel
 import graphviz
 from sklearn import tree
+from sklearn.preprocessing import PolynomialFeatures
 
 
 class ParametricModel(nn.Module):
@@ -48,29 +49,35 @@ class LinearModel(ParametricModel):
     def __init__(self, input_dim, output_dim, poly_degree=1, tiling_specs=None):
 
         super().__init__()
-       
+
         if poly_degree==1:
             self.poly=False
-            k=0
+            n = input_dim
         elif poly_degree>1: 
             self.poly=True
-            k=1
-        self.model = nn.Linear(input_dim**poly_degree*k + input_dim, output_dim)    
+            self.poly = PolynomialFeatures(degree=2, include_bias=False)
+            n = self.poly.fit_transform(np.zeros((1,input_dim))).shape[1]
+        
+        self.model = nn.Linear(n, output_dim)    
 
-    def _polynomial_features_2(self, x):
-        return torch.cat([x ** i for i in range(1, self.poly_degree+1)], -1)
+    # def _polynomial_features_2(self, x):
+    #     return torch.cat([x ** i for i in range(1, self.poly_degree+1)], -1)
 
     def _polynomial_features(self, x):
         
         if len(x.size()) == 2:
-            f = []
-            for xi in x:
-                f.append([i*j for i in xi for j in xi])
-            return torch.cat([x, torch.Tensor(f)], -1)
+            # f = []
+            # for xi in x:
+            #     f.append([i*j for n, i in enumerate(xi) for j in xi[n:]])
+            # return torch.cat([x, torch.Tensor(f)], -1)
+            return torch.Tensor(self.poly.fit_transform(x))
 
         elif len(x.size()) == 1:
-            f = [i*j for i in x for j in x]
-            return torch.cat([x, torch.Tensor(f)], -1)
+            # f = [i*j for n, i in enumerate(x) for j in x[n:]]
+            # return torch.cat([x, torch.Tensor(f)], -1)
+            return torch.Tensor(self.poly.fit_transform(x.reshape(1, -1)))
+
+       
               
     def forward(self, x): 
         
