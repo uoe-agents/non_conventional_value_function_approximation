@@ -55,8 +55,8 @@ class LinearModel(ParametricModel):
             n = input_dim
         elif poly_degree>1: 
             self.poly=True
-            self.poly = PolynomialFeatures(degree=2, include_bias=False)
-            n = self.poly.fit_transform(np.zeros((1,input_dim))).shape[1]
+            self.trans = PolynomialFeatures(degree=2, include_bias=False)
+            n = self.trans.fit_transform(np.zeros((1,input_dim))).shape[1]
         
         self.model = nn.Linear(n, output_dim)    
 
@@ -70,15 +70,13 @@ class LinearModel(ParametricModel):
             # for xi in x:
             #     f.append([i*j for n, i in enumerate(xi) for j in xi[n:]])
             # return torch.cat([x, torch.Tensor(f)], -1)
-            return torch.Tensor(self.poly.fit_transform(x))
+            return torch.Tensor(self.trans.fit_transform(x))
 
         elif len(x.size()) == 1:
             # f = [i*j for n, i in enumerate(x) for j in x[n:]]
             # return torch.cat([x, torch.Tensor(f)], -1)
-            return torch.Tensor(self.poly.fit_transform(x.reshape(1, -1)))
+            return torch.Tensor(self.trans.fit_transform(x.reshape(1, -1)))
 
-       
-              
     def forward(self, x): 
         
         if self.poly:
