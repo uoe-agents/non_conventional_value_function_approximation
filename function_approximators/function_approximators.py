@@ -35,7 +35,6 @@ class NeuralNetwork(ParametricModel):
         for i in range(len(dims) - 1):
             layers.append(nn.Linear(dims[i], dims[i+1]))
             if (i < len(dims) - 2):
-                # layers.append(nn.BatchNorm1d(dims[i+1]))
                 layers.append(nn.ReLU())
 
         model = nn.Sequential(*layers)
@@ -46,7 +45,7 @@ class NeuralNetwork(ParametricModel):
 
 class LinearModel(ParametricModel):
 
-    def __init__(self, input_dim, output_dim, poly_degree=1, tiling_specs=None):
+    def __init__(self, input_dim, output_dim, poly_degree=1):
 
         super().__init__()
 
@@ -60,21 +59,11 @@ class LinearModel(ParametricModel):
         
         self.model = nn.Linear(n, output_dim)    
 
-    # def _polynomial_features_2(self, x):
-    #     return torch.cat([x ** i for i in range(1, self.poly_degree+1)], -1)
-
     def _polynomial_features(self, x):
         
         if len(x.size()) == 2:
-            # f = []
-            # for xi in x:
-            #     f.append([i*j for n, i in enumerate(xi) for j in xi[n:]])
-            # return torch.cat([x, torch.Tensor(f)], -1)
             return torch.Tensor(self.trans.fit_transform(x))
-
         elif len(x.size()) == 1:
-            # f = [i*j for n, i in enumerate(x) for j in x[n:]]
-            # return torch.cat([x, torch.Tensor(f)], -1)
             return torch.Tensor(self.trans.fit_transform(x.reshape(1, -1)))
 
     def forward(self, x): 
@@ -191,9 +180,6 @@ class OnlineGaussianProcess():
         self.sigma_0 = sigma_0
         self.alpha = np.array([[init]])
         self.C = np.array([[init]])
-        # self.mew = 0.1
-        # self.sigma = 0.1
-        # self.r = 0.1
         self.e = np.array([[1]])
         self.Q = np.array([[1]])
 
@@ -212,14 +198,6 @@ class OnlineGaussianProcess():
 
     def _inc_dim_m(self, m):
         return np.pad(m, ((0,1),(0,1)))
-
-    # def _dec_dim_v(self, v, index):
-    #     return np.delete(v, [index], axis=0)
-
-    # def _dec_dim_m(self, m, index):
-    #     m = np.delete(m, [index], axis=0)
-    #     m = np.delete(m, [index], axis=1)
-    #     return m
 
     def update(self, X, x, y):
         k = self.kernel(x,x)
@@ -242,33 +220,5 @@ class OnlineGaussianProcess():
             self.C = self._inc_dim_m(self.C) + self.r*(self.s @ self.s.T)
             self.alpha = self._inc_dim_v(self.alpha) + self.q*self.s 
             add = True
-        
-        # index_del = None
-        # if X.shape[0] >= self.basis_limit:
-        #     epsilon = [np.absolute(self.alpha[i,0])/self.Q[i,i] for i in range(X.shape[0])]
-        #     index_del = np.argmin(epsilon)
-        #     self.e = self._dec_dim_v(self.e, 0)
-
-        #     Q_star = (self._dec_dim_v(self.Q[:, index_del], index_del)).reshape(-1,1)
-        #     # print(Q_star.shape)
-        #     q_star = self.Q[index_del,index_del]
-        #     # print(q_star.shape)
-        #     alpha_star = self.alpha[index_del,0]
-        #     # print(alpha_star.shape)
-        #     c_star = self.C[index_del, index_del]
-        #     # print(c_star.shape)
-        #     C_star = (self._dec_dim_v(self.C[:, index_del], index_del)).reshape(-1,1)
-        #     # print(C_star.shape)
-
-        #     self.e_hat = - Q_star/q_star
-        #     # print(self.e_hat)
-        #     self.Q = self._dec_dim_m(self.Q, index_del) - (Q_star@Q_star.T)/q_star
-        #     # print(self.Q.shape)
-        #     self.s = self._dec_dim_v(self.s, index_del)
-        #     # print(self.s.shape)
-        #     self.C = self._dec_dim_m(self.C, index_del) + c_star*(Q_star@Q_star.T)/(q_star**2) - 1/q_star* (Q_star@C_star.T + C_star@Q_star.T)
-        #     # print(self.C.shape)
-        #     self.alpha = self._dec_dim_v(self.alpha, index_del) + alpha_star/q_star * Q_star
-        #     # print(self.alpha.shape)
 
         return add

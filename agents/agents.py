@@ -5,17 +5,16 @@ import numpy as np
 import torch
 from torch import Tensor
 import torch.nn.functional as F
-from torch.distributions.categorical import Categorical
 import torch.nn
-from torch.optim import Adam, SGD, RMSprop
+from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 
-from typing import Dict, Iterable, List
+from typing import Iterable
 from abc import ABC, abstractmethod
 from collections import deque
 
 
-class ParametricAgent(ABC):
+class Agent(ABC):
 
     def __init__(
         self,
@@ -24,7 +23,6 @@ class ParametricAgent(ABC):
         gamma: float,
         epsilon: float,
         target_update_freq: int,
-        n_actions: int,
     ):
 
         self.action_space = action_space
@@ -35,36 +33,27 @@ class ParametricAgent(ABC):
         self.epsilon = epsilon
         self.update_counter = 0
 
-        low = action_space.low.item()
-        high = action_space.high.item()
-        diff = high - low 
-        self.tiles = np.linspace(low + diff/((n_actions-1)*2), high - diff/((n_actions-1)*2), n_actions-1)
-        self.n_actions = n_actions
-        self.actions = np.linspace(low, high, n_actions)
-    
-    def _actions_to_idx(self, actions):   
-        return np.digitize(actions, self.tiles)
 
     def act(self, obs, explore):
         
         if explore and np.random.random_sample() < self.epsilon:
             # Sample a random action from the action space
-            action = self._actions_to_idx(self.action_space.sample().item())
+            action = self.action_space.sample()
         else:
             # Obtain the action values given the current observations from the Critics Network
-            q_values = self.model(Tensor(obs))
+            actions = self.model(Tensor(obs))
             # Select the action with the highest action value given the current observations
-            action = torch.argmax(q_values).item()
-        return self.actions[int(action)]
+            action = torch.argmax(actions).item()
+        
+        return action
 
 
     def update(self, batch):
 
         # Obtain the action values given the current states in the batch from critics network
-        Q = self.model(batch.states) 
-        action_indices = Tensor(self._actions_to_idx(batch.actions))
+        Q = self.model(batch.states)   
         # Obtain the action values of the actions selected in the batch
-        q_current = Q.gather(1, action_indices.long())
+        q_current = Q.gather(1, batch.actions.long())
 
         # Obtain the action values given the next states in the batch from critics_target network
         Q_next = self.target_model(batch.next_states)
@@ -74,18 +63,7 @@ class ParametricAgent(ABC):
         y = batch.rewards + self.gamma * q_target
         
         # calculate the mse loss between y and q_current
-        q_loss = F.mse_loss(q_current, y) 
-        
-        # if self.update_counter % 1000 == 0:
-        #     print(f"Weights: {self.model.model[0].weight}")
-        #     print(f"States: {batch.states}")
-        #     print(f"Actions: {batch.actions}")
-        #     print(f"Q: {Q}") 
-        #     print(f"q_current: {q_current}")
-        #     print(f"Q_next: {Q_next}")
-        #     print(f"y: {y}")
-            # print(f"q_loss: {q_loss}")
-        
+        q_loss = F.mse_loss(q_current, y)     
         
         # zeroise the gradients of the optimiser
         self.model_optim.zero_grad()      
@@ -109,7 +87,7 @@ class ParametricAgent(ABC):
         return {"q_loss": q_loss.item()}
 
 
-class DQNAgent(ParametricAgent):
+class DQNAgent(Agent):
 
     def __init__(self,
         action_space: gym.Space,
@@ -120,12 +98,10 @@ class DQNAgent(ParametricAgent):
         fa,
         learning_rate: float,
         hidden_size: Iterable[int],
-        batch_size: int, 
         max_deduct: float,
         decay: float,
         lr_step_size: int,
-        lr_gamma: float,
-        n_actions: int, 
+        lr_gamma: float, 
         **kwargs
     ):
         
@@ -134,8 +110,7 @@ class DQNAgent(ParametricAgent):
             observation_space,
             gamma,
             epsilon,
-            target_update_freq,
-            n_actions,
+            target_update_freq
         )
 
         self.max_deduct = max_deduct
@@ -146,17 +121,18 @@ class DQNAgent(ParametricAgent):
         else:
             input_size = observation_space.shape[0]
 
-        self.model = fa((input_size, *hidden_size, self.n_actions))
+        self.model = fa((input_size, *hidden_size, action_space.n))
 
         self.target_model = deepcopy(self.model)
         self.model_optim = Adam(self.model.parameters(), lr=learning_rate, eps=1e-3)
         self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
 
     def schedule_hyperparameters(self, timestep, max_timestep):
+        # reducing epsilon over time
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
-class LinearAgent(ParametricAgent):
+class LinearAgent(Agent):
 
     def __init__(self,
         action_space: gym.Space,
@@ -166,14 +142,11 @@ class LinearAgent(ParametricAgent):
         target_update_freq: int,
         fa,
         learning_rate: float,
-        batch_size: int,
         poly_degree: int,
-        # tiling_specs: list,  
         max_deduct: float,
         decay: float,
         lr_step_size: int,
         lr_gamma: float,
-        n_actions: int,
         **kwargs
     ):
         
@@ -182,8 +155,7 @@ class LinearAgent(ParametricAgent):
             observation_space,
             gamma,
             epsilon,
-            target_update_freq,
-            n_actions
+            target_update_freq
         )
 
         self.max_deduct = max_deduct
@@ -194,7 +166,7 @@ class LinearAgent(ParametricAgent):
         else:
             input_size = observation_space.shape[0]
 
-        self.model = fa(input_size, self.n_actions, poly_degree)
+        self.model = fa(input_size, action_space.n, poly_degree)
         
         if torch.cuda.is_available():
             self.model.cuda()
@@ -204,6 +176,7 @@ class LinearAgent(ParametricAgent):
         self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
    
     def schedule_hyperparameters(self, timestep, max_timestep):
+        # reducing epsilon over time
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
@@ -221,7 +194,6 @@ class FQIAgent():
         model_save_freq: int,
         model_save_capacity: int,
         model_params, 
-        n_actions: int,
         **kwargs
     ):
 
@@ -236,51 +208,40 @@ class FQIAgent():
 
         self.step_counter = 0
         self.fitted = False
-
-        # self.encoded_actions = self._encode_actions()
+        self.encoded_actions = self._encode_actions()
 
         self.model = fa(**model_params)
-        self.models = deque([self.model], maxlen=model_save_capacity)
-        
-        low = action_space.low.item()
-        high = action_space.high.item()
-        diff = high - low 
-        self.tiles = np.linspace(low + diff/((n_actions-1)*2), high - diff/((n_actions-1)*2), n_actions-1)
-        self.n_actions = n_actions
-        self.actions = np.linspace(low, high, n_actions)
+        if self.model_save_freq > 0:
+            self.models = deque([self.model], maxlen=model_save_capacity)
+
 
     def _one_hot(self, length, index):
         vector = np.zeros(length)
         vector[index]=int(1)
         return list(vector)
 
-    # def _encode_actions(self):
-    #     length = self.n_actions
-    #     return [self._one_hot(length, i) for i in range(length)] 
+    def _encode_actions(self):
+        length = self.action_space.n
+        return [self._one_hot(length, i) for i in range(length)] 
 
     def _predict(self, inputs):
         l = len(self.models)
         out = []
         for i, f in enumerate(self.models):
-            out.append(f.predict(inputs)*(i+1)/(sum(range(l+1))))
-        # out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
+            out.append(f.predict(inputs)*(i+1)/(sum(range(l+2))))
+        out.append(self.model.predict(inputs)*(l+1)/sum(range(l+2)))
         return np.sum(out, 0)
-  
-    def _action_to_idx(self, action):   
-        return np.digitize(action, self.tiles)
 
     def act(self, obs, explore):
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
-            # action = self._action_to_idx(self.action_space.sample().item())
-            action = self.action_space.sample().item()
-        else:       
-            # Q = [self._predict(np.concatenate([obs, [a]],-1).reshape(1,-1)) for a in self.actions]
-            Q = [self.model.predict(np.concatenate([obs, [a]],-1).reshape(1,-1)) for a in self.actions]
-            action = np.max(Q)
-            # if self.step_counter % 100 == 0:
-            #     print(obs)
-            #     print(Q)
-            #     print(action)
+            action = self.action_space.sample()
+        else:   
+            if self.model_save_freq > 0:    
+                Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            else:
+                Q = [self.model.predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
+            action = np.argmax(Q)
+        
         return action
 
     def update(self, batch):
@@ -288,29 +249,30 @@ class FQIAgent():
         
         if self.step_counter % self.update_freq == 0:
             
-            inputs = np.concatenate([batch.states, batch.actions], -1)
-            # Q_next = [self._predict(np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + a], -1)) for a in self.actions] 
-            Q_next = [self.model.predict(np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + a], -1)) for a in self.actions] 
-            # print(np.argmax(Q_next, 0))      
-            outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(Q_next, 0).reshape(-1,1)).reshape(-1)             
+            inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
+            preds = []
+            
+            for i in range(self.action_space.n):
+                next_inputs = np.concatenate([batch.next_states, np.zeros((batch.actions.size()[0], 1)) + self.encoded_actions[i]], -1)
+                if self.model_save_freq > 0:
+                    preds.append(self._predict(next_inputs))
+                else:
+                    preds.append(self.model.predict(next_inputs))
+                
+            preds = np.array(preds).T
+            outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
             self.model.fit(inputs, outputs) 
 
             # check for update condition
             if self.step_counter % self.model_save_freq == 0:
                 # if update condition is met, save current model
                 self.models.append(deepcopy(self.model))
-
-            # if self.step_counter % 1000 == 0: 
-            #     print(f"Inputs: {inputs}")
-            #     print(f"Q_next: {Q_next[0]}")
-            #     print(f"Q_next: {Q_next[1]}")
-            #     print(f"Q_next_max: {np.max(Q_next, 0)}")
-            #     print(f"Outputs: {outputs}")
+        
         else:
             pass
 
     def initial_fit(self, batch):
-        inputs = np.concatenate([batch.states, batch.actions], -1)
+        inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
         outputs = np.array(batch.rewards).reshape(-1)
         self.model.fit(inputs, outputs)
         self.fitted = True
@@ -349,9 +311,7 @@ class OnlineGaussianProccessAgent():
         else:
             input_size = observation_space.shape[0]
         
-        self.n_actions = 11
-        self.X = np.zeros((1, input_size + self.n_actions))
-        self.tiles = np.linspace(action_space.low.item()+0.2, action_space.high.item()-0.2, 10)
+        self.X = np.zeros((1, input_size + self.action_space.n))
     
     def _one_hot(self, length, index):
         vector = np.zeros(length)
@@ -362,34 +322,19 @@ class OnlineGaussianProccessAgent():
         length = self.action_space.n
         return [self._one_hot(length, i) for i in range(length)] 
 
-    def _action_to_idx(self, action):   
-        return np.digitize(action, self.tiles)
-  
     def act(self, obs, explore):
 
         if (explore and np.random.random_sample() < self.epsilon):
-            action = self._action_to_idx(self.action_space.sample())
+            action = self.action_space.sample()
         else:       
             Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
             action = np.argmax(Q)
-            # print(Q)
-        return action
-        
-        # if explore:
-        #     q_values = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
-        #     Q = [q[0] + np.absolute(np.random.normal(q[0], q[1])-q[0]) for q in q_values]
-        #     action = np.argmax(Q)
-        # else:        
-        #     Q = [self.model.predict(self.X, np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
-        #     action = np.argmax(Q)
-        #     print(Q)
-        # return action    
+        return action 
     
     def update(self, obs, next_obs, reward, action, done):
         
-        q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.n_actions)]
+        q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
         Q = [q[0] + 2*q[1] for q in q_values]
-        # Q = [np.random.normal(q[0], q[1]) for q in q_values]
         # Q = [q[0] for q in q_values]
         Q_max = np.max(Q)
         x = np.concatenate([obs, self.encoded_actions[action]],-1).reshape(1,-1)
@@ -399,8 +344,6 @@ class OnlineGaussianProccessAgent():
         add = self.model.update(self.X, x, y) 
         if add:
             self.X = np.vstack([self.X, x])
-        # if index_del is not None:
-        #     self.X = np.delete(self.X, [index_del], axis=0)
 
     def schedule_hyperparameters(self, timestep, max_timestep):
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct

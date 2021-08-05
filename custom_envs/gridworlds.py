@@ -1,3 +1,7 @@
+'''
+Code adapted from: https://github.com/podondra/gym-gridworlds
+'''
+
 import gym
 from gym import spaces
 import numpy as np
@@ -10,10 +14,6 @@ class SimpleGridworldEnv(gym.Env):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Discrete(self.height*self.width)
         
-        # self.observation_space = spaces.Tuple((
-        #         spaces.Discrete(self.height),
-        #         spaces.Discrete(self.width)
-        #         ))
         self.moves = {
                 0: (-1, 0),  # up
                 1: (0, 1),   # right
@@ -57,10 +57,6 @@ class WindyGridworldEnv(gym.Env):
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Discrete(self.height*self.width)
         
-        # self.observation_space = spaces.Tuple((
-        #         spaces.Discrete(self.height),
-        #         spaces.Discrete(self.width)
-        #         ))
         self.moves = {
                 0: (-1, 0),  # up
                 1: (0, 1),   # right

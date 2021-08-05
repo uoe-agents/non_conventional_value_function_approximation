@@ -1,5 +1,3 @@
-# import torch.nn as nn
-# import gym
 import numpy as np 
 from collections import namedtuple
 import torch
@@ -49,12 +47,10 @@ class ReplayBuffer:
         
         # initialise replay buffer
         if self.threshold <= -1:
-        
             # push transition in replay buffer
             index = self.count % self.capacity
             for i, arg in enumerate(args):
                 self.memory[i][index, :] = arg
-
             # update count
             self.count += 1
 
@@ -62,17 +58,14 @@ class ReplayBuffer:
             a = np.concatenate((args[0], args[1])).reshape(1,self.m)
             distances = dist.cdist(a,self.matrix,'euclidean')
             
-            if np.min(distances) > self.threshold:
-                n = int(self.count/50+1) 
+            if np.min(distances) > self.threshold: 
                 self.matrix = np.concatenate((self.matrix, a), axis=0)
                 # push transition in replay buffer
-                for _ in range(1):
-                    index = self.count % self.capacity
-                    for i, arg in enumerate(args):
-                        self.memory[i][index, :] = arg
-
-                    # update count
-                    self.count += 1
+                index = self.count % self.capacity
+                for i, arg in enumerate(args):
+                    self.memory[i][index, :] = arg
+                # update count
+                self.count += 1
 
     def sample(self, batch_size, device = "cpu"):
 

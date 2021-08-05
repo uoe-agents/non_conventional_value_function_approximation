@@ -12,6 +12,7 @@ def play_episode(
     non_param,
     max_steps,
     online=False,
+    threshold=-1,
     batch_size=32,
     train=True,
     explore=True,
@@ -42,8 +43,10 @@ def play_episode(
                 np.array([done], dtype=np.float32),
             )
             if len(replay_buffer) >= batch_size:
-                batch = replay_buffer.sample(replay_buffer.count)
-                # batch = replay_buffer.sample(batch_size)
+                if threshold > -1:
+                    batch = replay_buffer.sample(replay_buffer.count)
+                else:
+                    batch = replay_buffer.sample(batch_size)
                 if non_param:
                     if not agent.fitted:
                         agent.initial_fit(batch)
@@ -105,7 +108,8 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                 train=True,
                 explore=True,
                 render=False,       
-                online=online,       
+                online=online,  
+                threshold=threshold,     
                 non_param = config["non_param"],
                 max_steps=config["episode_length"],
                 batch_size=config["batch_size"],
@@ -131,6 +135,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                         explore=False,
                         render=render,
                         online=online,
+                        threshold=threshold,
                         non_param = config["non_param"],
                         max_steps = config["max_steps"],
                         batch_size=config["batch_size"],
@@ -173,7 +178,6 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
         elapsed_seconds = time.time() - start_time
         
         if elapsed_seconds > config["max_time"]:
-            # pbar.write(f"Training ended after {elapsed_seconds}s.")
             break
         
         agent.schedule_hyperparameters(timesteps_elapsed, config["max_timesteps"])
@@ -184,7 +188,8 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
             online=online,
             train=True,
             explore=True,
-            render=False,              
+            render=False,    
+            threshold=threshold,          
             non_param = config["non_param"],
             max_steps=config["episode_length"],
             batch_size=config["batch_size"],
@@ -203,6 +208,7 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
                 train=False,
                 explore=False,
                 render=render,
+                threshold=threshold,
                 non_param = config["non_param"],
                 max_steps = config["max_steps"],
                 batch_size=config["batch_size"],
@@ -248,7 +254,8 @@ def train_time(env, config, fa, agent, online=False, threshold=-1):
                 online=online,
                 train=True,
                 explore=True,
-                render=False,              
+                render=False,   
+                threshold=threshold,           
                 non_param = config["non_param"],
                 max_steps=config["episode_length"],
                 batch_size=config["batch_size"],
