@@ -264,9 +264,10 @@ class FQIAgent():
             self.model.fit(inputs, outputs) 
 
             # check for update condition
-            if self.step_counter % self.model_save_freq == 0:
-                # if update condition is met, save current model
-                self.models.append(deepcopy(self.model))
+            if self.model_save_freq > 0:
+                if self.step_counter % self.model_save_freq == 0:
+                    # if update condition is met, save current model
+                    self.models.append(deepcopy(self.model))
         
         else:
             pass

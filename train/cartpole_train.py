@@ -9,7 +9,7 @@ from agents.agents import DQNAgent, LinearAgent, FQIAgent, OnlineGaussianProcces
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.metrics.pairwise import rbf_kernel
 
-RENDER = True
+RENDER = False
 env = gym.make("CartPole-v1")
 environment = "cartpole"
 
@@ -89,7 +89,7 @@ CONFIG_RF = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 5,
+    "eval_episodes": 10,
     "model_save_freq": 1000,
     "model_save_capacity": 20,
     "update_freq": 5,
@@ -131,7 +131,7 @@ CONFIG_KNR = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 5,
+    "eval_episodes": 10,
     "model_save_freq": 1000,
     "model_save_capacity": 20,
     "update_freq": 1,
@@ -152,7 +152,7 @@ CONFIG_GP = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 5,
+    "eval_episodes": 10,
     "model_save_freq": 1000,
     "model_save_capacity": 20,
     "update_freq": 10,

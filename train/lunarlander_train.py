@@ -1,190 +1,189 @@
+import gym 
 import operator
 import numpy as np
-from custom_envs.gridworlds import SimpleGridworldEnv
 
 from function_approximators.function_approximators import NeuralNetwork, LinearModel, DecisionTree, RandomForest, SupportVectorRegressor, KNeighboursRegressor, GaussianProcessRegressor, OnlineGaussianProcess
 from utils.train_utils import train, solve, train_time
-from agents.agents import DQNAgent, LinearAgent, FQIAgent, OnlineGaussianProccessAgent
 
+from agents.agents import DQNAgent, LinearAgent, FQIAgent, OnlineGaussianProccessAgent
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.metrics.pairwise import rbf_kernel
 
 RENDER = False
-env = SimpleGridworldEnv()
-environment = "simplegrid"
+env = gym.make("LunarLander-v2")
+environment = "lunarlander"
 
-## Configuration Files
 
 # DQN Config
 CONFIG_DQN = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
+    "episode_length": 500,
+    "max_timesteps": 200000,
     "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "eval_freq": 10000, 
     "eval_episodes": 10,
-    "learning_rate": 0.00075,
-    "hidden_size": (32,32),
-    "target_update_freq": 50,
-    "batch_size": 32,
+    "learning_rate": 0.0015,
+    "hidden_size": (256,128),
+    "target_update_freq": 100,
+    "batch_size": 64,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "plot_loss": False,
     "epsilon": 1,
-    "max_deduct": 0.97,
-    "decay": 0.25,
-    "lr_step_size": 250,
-    "lr_gamma": 0.95,
-    "max_steps": 50,
+    "max_deduct": 0.95,
+    "decay": 0.1,
+    "lr_step_size": 1000,
+    "lr_gamma": 0.99,
+    "max_steps": 500,
     "non_param": False,
 }
 
 # Linear Config
 CONFIG_LINEAR = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
+    "episode_length": 500,
+    "max_timesteps": 200000,
     "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "eval_freq": 10000, 
     "eval_episodes": 10,
     "learning_rate": 0.02,
-    "target_update_freq": 20,
-    "batch_size": 32,
+    "target_update_freq": 50,
+    "batch_size": 64,
     "gamma": 0.99,
-    "buffer_capacity": int(1e7),
+    "buffer_capacity": int(1e5),
     "plot_loss": False,
     "epsilon": 1,
-    "max_steps": 50,
-    "poly_degree": 1,
-    "max_deduct": 0.97,
-    "decay": 0.5,
-    "lr_step_size": 250,
+    "max_steps": 500,
+    "poly_degree": 4,
+    "max_deduct": 0.95,
+    "decay": 0.1,
+    "lr_step_size": 1000,
     "lr_gamma": 0.99,
     "non_param": False,
 }
 
 # Decision Tree Config
 CONFIG_DT = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
+    "episode_length": 500,
+    "max_timesteps": 200000,
     "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "eval_freq": 10000, 
     "eval_episodes": 10,
-    "model_save_freq": 250,
-    "model_save_capacity": 20,
+    "model_save_freq": 0,
+    "model_save_capacity": 0,
     "update_freq": 1,
-    "batch_size": 512,
+    "batch_size": 128,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "epsilon": 1,
-    "max_deduct": 0.95,
+    "max_deduct": 0.9,
     "decay": 0.4,
-    "max_steps": 50,
+    "max_steps": 500,
     "non_param": True,
-    "model_params": {"criterion":"mse","max_depth": 15, "min_samples_split": 20, "min_samples_leaf": 5},
+    "model_params": {"criterion":"mse","max_depth": 20, "min_samples_split": 20, "min_samples_leaf": 5},
     "feature_names": ["Cart Position", "Cart Velocity", "Pole Angle", "Pole Angular Velocity", "Action: Push Left", "Action: Push Right"],
     "plot_name": "dt_depth=8",
 }
 
 # Random Forest Config
 CONFIG_RF = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
-    "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "episode_length": 500,
+    "max_timesteps": 200000,
+    "max_time": 30 * 1000,
+    "eval_freq": 10000, 
     "eval_episodes": 10,
-    "model_save_freq": 250,
-    "model_save_capacity": 20,
-    "update_freq": 5,
-    "batch_size": 512,
+    "model_save_freq": 0,
+    "model_save_capacity": 0,
+    "update_freq": 10,
+    "batch_size": 128,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "epsilon": 1,
-    "max_deduct": 0.95,
-    "decay": 0.2,
-    "max_steps": 50,
+    "max_deduct": 0.9,
+    "decay": 0.4,
+    "max_steps": 500,
     "non_param": True,
-    "model_params": {"n_estimators": 5,"max_depth": 15, "min_samples_split": 20, "min_samples_leaf": 5},
+    "model_params": {"n_estimators": 10,"max_depth": 20, "min_samples_split": 20, "min_samples_leaf": 5},
 }
 
 # Support Vector Regressor Config
 CONFIG_SVR = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
-    "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "episode_length": 500,
+    "max_timesteps": 200000,
+    "max_time": 30 * 1000,
+    "eval_freq": 10000, 
     "eval_episodes": 10,
-    "model_save_freq": 250,
-    "model_save_capacity": 20,
-    "update_freq": 1,
-    "batch_size": 256,
+    "model_save_freq": 0,
+    "model_save_capacity": 0,
+    "update_freq": 200,
+    "batch_size": 128,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "epsilon": 1,
     "max_deduct": 0.95,
     "decay": 0.3,
-    "max_steps": 50,
+    "max_steps": 500,
     "non_param": True,
-    "model_params": {"kernel":"rbf", "degree": 2, "C": 3},
+    "model_params": {"kernel":"rbf", "degree": 2, "C": 1.2},
 }
 
 
 # K-Neighbors Regressor Config
 CONFIG_KNR = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
-    "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "episode_length": 500,
+    "max_timesteps": 200000,
+    "max_time": 30 * 1000,
+    "eval_freq": 10000, 
     "eval_episodes": 10,
-    "model_save_freq": 250,
-    "model_save_capacity": 20,
-    "update_freq": 1,
-    "batch_size": 256,
+    "model_save_freq": 0,
+    "model_save_capacity": 0,
+    "update_freq": 100,
+    "batch_size": 128,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "epsilon": 1,
-    "max_deduct": 0.95,
-    "decay": 0.3,
-    "max_steps": 50,
+    "max_deduct": 0.93,
+    "decay": 0.4,
+    "max_steps": 500,
     "non_param": True,
-    "model_params": {"n_neighbors":7, "weights": "distance", "algorithm": "auto", "leaf_size": 30},
+    "model_params": {"n_neighbors":10, "weights": "distance", "algorithm": "auto", "leaf_size": 30},
 }
 
 # Gaussian Process Config
 CONFIG_GP = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
-    "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "episode_length": 500,
+    "max_timesteps": 200000,
+    "max_time": 30 * 1000,
+    "eval_freq": 10000, 
     "eval_episodes": 10,
-    "model_save_freq": 250,
-    "model_save_capacity": 20,
-    "update_freq": 10,
-    "batch_size": 512,
+    "model_save_freq": 0,
+    "model_save_capacity": 0,
+    "update_freq": 100,
+    "batch_size": 128,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "epsilon": 1,
-    "max_deduct": 0.95,
-    "decay": 0.3,
-    "max_steps": 50,
+    "max_deduct": 0.9,
+    "decay": 0.4,
+    "max_steps": 500,
     "non_param": True,
-    "model_params": {"alpha": 1e-10, "normalize_y": False, "kernel":  RBF(length_scale=0.5, length_scale_bounds="fixed")},
+    "model_params": {"alpha": 1e-10, "normalize_y": False, "kernel":  RBF(length_scale=0.3, length_scale_bounds="fixed")},
 }
 
 # Online Gaussian Process Config
 CONFIG_GP_Online = {
-    "episode_length": 50,
-    "max_timesteps": 5000,
-    "max_time": 30 * 60,
-    "eval_freq": 250, 
+    "episode_length": 500,
+    "max_timesteps": 200000,
+    "max_time": 30 * 1000,
+    "eval_freq": 10000, 
     "eval_episodes": 10,
     "gamma": 0.99,
     "buffer_capacity": int(1e6),
     "batch_size": 32,
     "epsilon": 1,
-    "max_deduct": 0.95,
-    "decay": 0.3,
-    "max_steps": 50,
+    "max_deduct": 0.93,
+    "decay": 0.4,
+    "max_steps": 500,
     "non_param": True,
-    "model_params": {"sigma_0": 0.5, "init":-10, "kernel":  rbf_kernel, "epsilon_tol": 0.085, "basis_limit": 1000},
+    "model_params": {"sigma_0": 0.3, "init": 0, "kernel":  rbf_kernel, "epsilon_tol": 0.075, "basis_limit": 1000},
 }
 
 CONFIGS = [CONFIG_DQN, CONFIG_LINEAR, CONFIG_DT, CONFIG_RF, CONFIG_SVR, CONFIG_KNR, CONFIG_GP, CONFIG_GP_Online]

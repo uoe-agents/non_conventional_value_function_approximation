@@ -4,12 +4,12 @@ from custom_envs.gridworlds import WindyGridworldEnv
 
 from function_approximators.function_approximators import NeuralNetwork, LinearModel, DecisionTree, RandomForest, SupportVectorRegressor, KNeighboursRegressor, GaussianProcessRegressor, OnlineGaussianProcess
 from utils.train_utils import train, solve, train_time
-
 from agents.agents import DQNAgent, LinearAgent, FQIAgent, OnlineGaussianProccessAgent
+
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.metrics.pairwise import rbf_kernel
 
-RENDER = True
+RENDER = False
 env = WindyGridworldEnv()
 environment = "windygrid"
 
@@ -111,7 +111,7 @@ CONFIG_SVR = {
     "max_timesteps": 20000,
     "max_time": 30 * 60,
     "eval_freq": 1000, 
-    "eval_episodes": 1,
+    "eval_episodes": 10,
     "model_save_freq": 1000,
     "model_save_capacity": 20,
     "update_freq": 1,
