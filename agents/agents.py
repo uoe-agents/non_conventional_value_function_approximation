@@ -14,8 +14,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 
 
-class Agent(ABC):
-      
+class Agent(ABC):  
     '''
     A base class used by the DQN and Linear VFA agent classes.
     
@@ -76,8 +75,7 @@ class Agent(ABC):
         -------
         action: object
             represents an environment action
-        '''
-        
+        '''    
         if explore and np.random.random_sample() < self.epsilon:
             # Sample a random action from the action space
             action = self.action_space.sample()
@@ -104,7 +102,6 @@ class Agent(ABC):
         q_loss: float
             mse loss of update
         '''
-
         # Obtain the action values given the current states in the batch from critics network
         Q = self.model(batch.states)   
         # Obtain the action values of the actions selected in the batch
@@ -139,7 +136,6 @@ class Agent(ABC):
 
 
 class DQNAgent(Agent):
-    
     '''
     A class that represents the Reinforcement Learning agent of the DQN model.
     
@@ -230,7 +226,6 @@ class DQNAgent(Agent):
 
 
 class LinearAgent(Agent):
-
     '''
     A class that represents the Reinforcement Learning agent of the Linear model.
     
@@ -318,14 +313,12 @@ class LinearAgent(Agent):
             current timestep
         max_timestep: int
             max timestep
-        '''
-        
+        '''       
         # reducing epsilon over time
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
-class FQIAgent():
-
+class FQIAgent():  
     '''
     A class that represents the Reinforcement Learning agent used for all models implemented under the Fitted-Q Iteration framework.
     
@@ -400,15 +393,51 @@ class FQIAgent():
 
 
     def _one_hot(self, length, index):
+        '''
+        Returns a one hot vector 
+        
+        Parameters
+        ----------
+        length: int
+            length of the vector
+        index: int
+            position of 1
+        
+        Returns
+        -------
+        vector: list
+            one hot vector in list format
+        '''
         vector = np.zeros(length)
         vector[index]=int(1)
         return list(vector)
 
     def _encode_actions(self):
+        '''
+        Returns a one hot vector for each action in the environment
+        
+        Returns
+        -------
+        encoded_actions: list
+            list of one hot vectors for each action in the environment
+        '''
         length = self.action_space.n
         return [self._one_hot(length, i) for i in range(length)] 
 
     def _predict(self, inputs):
+        '''
+        Returns a weighted average prediction of the stored models given an observation
+        
+        Parameters
+        ----------
+        inputs: list
+            environment observation
+        
+        Returns
+        -------
+        prediction: float
+            weigted average value of predicted q values from stored models
+        '''
         l = len(self.models)
         out = []
         for i, f in enumerate(self.models):
@@ -431,8 +460,7 @@ class FQIAgent():
         -------
         action: object
             represents an environment action
-        '''
-            
+        ''' 
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
             action = self.action_space.sample()
         else:   
@@ -453,9 +481,7 @@ class FQIAgent():
         batch: collections.namedtuple
             batch of (state, action, next_state, reward, done) tuples
         '''
-        
         self.step_counter += 1
-        
         if self.step_counter % self.update_freq == 0:
             
             inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
@@ -502,8 +528,7 @@ class FQIAgent():
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
-class OnlineGaussianProccessAgent():
-    
+class OnlineGaussianProccessAgent(): 
     '''
     A class that represents the Reinforcement Learning agent used for the Online Gaussian Process model.
     
@@ -567,11 +592,34 @@ class OnlineGaussianProccessAgent():
         self.X = np.zeros((1, input_size + self.action_space.n))
     
     def _one_hot(self, length, index):
+        '''
+        Returns a one hot vector 
+        
+        Parameters
+        ----------
+        length: int
+            length of the vector
+        index: int
+            position of 1
+        
+        Returns
+        -------
+        vector: list
+            one hot vector in list format
+        '''
         vector = np.zeros(length)
         vector[index]=int(1)
         return list(vector)
 
     def _encode_actions(self):
+        '''
+        Returns a one hot vector for each action in the environment
+        
+        Returns
+        -------
+        encoded_actions: list
+            list of one hot vectors for each action in the environment
+        '''
         length = self.action_space.n
         return [self._one_hot(length, i) for i in range(length)] 
 
@@ -591,7 +639,6 @@ class OnlineGaussianProccessAgent():
         action: object
             represents an environment action
         '''
-
         if (explore and np.random.random_sample() < self.epsilon):
             action = self.action_space.sample()
         else:       
@@ -615,8 +662,7 @@ class OnlineGaussianProccessAgent():
             action
         done: bool
             whether the environment should be reset
-        '''
-        
+        '''     
         q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
         Q = [q[0] + 2*q[1] for q in q_values]
         # Q = [q[0] for q in q_values]
