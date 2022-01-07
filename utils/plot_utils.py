@@ -1,3 +1,7 @@
+"""
+Code adapted from https://matplotlib.org/stable/gallery/images_contours_and_fields/image_annotated_heatmap.html
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
