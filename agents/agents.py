@@ -15,6 +15,32 @@ from collections import deque
 
 
 class Agent(ABC):
+      
+    '''
+    A base class used by the DQN and Linear VFA agent classes.
+    
+    Attributes
+    ----------
+    action_space: gym.Space
+        action space from Gym
+    observation_space: gym.Space  
+        state space from Gym
+    gamma: float
+        parameter of the Markov Decision Process
+    epsilon: float
+        exploration parameter
+    target_update_freq: int
+        parameter that defines the model update frequency
+    update_counter: int
+        parameter that counts the number of model updates
+
+    Methods
+    -------
+    act():
+        Returns an action given a state (observation) of the environment.
+    update():
+        Updates model given a batch of (state, action, next_state, reward, done) tuples
+    '''
 
     def __init__(
         self,
@@ -23,6 +49,7 @@ class Agent(ABC):
         gamma: float,
         epsilon: float,
         target_update_freq: int,
+        update_counter: int
     ):
 
         self.action_space = action_space
@@ -35,6 +62,21 @@ class Agent(ABC):
 
 
     def act(self, obs, explore):
+        '''
+        Takes as input an environment observation and returns an action.
+        
+        Parameters
+        ----------
+        obs: object
+            represents an environment state
+        explore: bool
+            determines whether exploration happens
+        
+        Returns
+        -------
+        action: object
+            represents an environment action
+        '''
         
         if explore and np.random.random_sample() < self.epsilon:
             # Sample a random action from the action space
@@ -49,6 +91,19 @@ class Agent(ABC):
 
 
     def update(self, batch):
+        '''
+        Takes as input a batch of tuples and updates the model parameters
+        
+        Parameters
+        ----------
+        batch: collections.namedtuple
+            batch of (state, action, next_state, reward, done) tuples
+        
+        Returns
+        -------
+        q_loss: float
+            mse loss of update
+        '''
 
         # Obtain the action values given the current states in the batch from critics network
         Q = self.model(batch.states)   
@@ -70,11 +125,8 @@ class Agent(ABC):
         # perform a backward pass
         q_loss.backward()
         # perform an optimisation step of the parameters of the critic network
-        self.model_optim.step()
-        
-        self.scheduler.step()
-        # print(self.model_optim.param_groups[0]['lr'])
-          
+        self.model_optim.step()  
+        self.scheduler.step() 
         # increase update counter
         self.update_counter += 1
 
@@ -82,12 +134,47 @@ class Agent(ABC):
         if self.update_counter % self.target_update_freq == 0:
             # if update condition is met, hard update the parameters of the target network
             self.target_model.hard_update(self.model)
-
-        # print(q_loss)      
+   
         return {"q_loss": q_loss.item()}
 
 
 class DQNAgent(Agent):
+    
+    '''
+    A class that represents the Reinforcement Learning agent of the DQN model.
+    
+    Attributes
+    ----------
+    action_space: gym.Space
+        action space from Gym
+    observation_space: gym.Space  
+        state space from Gym
+    gamma: float
+        parameter of the Markov Decision Process
+    epsilon: float
+        exploration parameter
+    target_update_freq: int
+        parameter that defines the model update frequency
+    fa: function_approximators.model
+        function approximation model
+    learning_rate: float
+        parameter of the neural network
+    hidden_size: Iterable[int]
+        parameter of the neural network
+    max_deduct: float
+        parameter for reducing epsilon over time
+    decay: float
+        parameter for reducing epsilon over time
+    lr_step_size: int
+        parameter for reducing learning rate over time
+    lr_gamma: float
+        parameter for reducing learning rate over time
+
+    Methods
+    -------
+    schedule_hyperparameters():
+        adjusts hyperparameter values over time
+    '''
 
     def __init__(self,
         action_space: gym.Space,
@@ -128,11 +215,57 @@ class DQNAgent(Agent):
         self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
 
     def schedule_hyperparameters(self, timestep, max_timestep):
+        '''
+        Adjusts values of hyperparameters over time
+        
+        Parameters
+        ----------
+        timestep: int
+            current timestep
+        max_timestep: int
+            max timestep
+        '''
         # reducing epsilon over time
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
 class LinearAgent(Agent):
+
+    '''
+    A class that represents the Reinforcement Learning agent of the Linear model.
+    
+    Attributes
+    ----------
+    action_space: gym.Space
+        action space from Gym
+    observation_space: gym.Space  
+        state space from Gym
+    gamma: float
+        parameter of the Markov Decision Process
+    epsilon: float
+        exploration parameter
+    target_update_freq: int
+        parameter that defines the model update frequency
+    fa: function_approximators.model
+        function approximation model
+    learning_rate: float
+        parameter of the linear model
+    poly_degree: Iterable[int]
+        parameter of the linear model
+    max_deduct: float
+        parameter for reducing epsilon over time
+    decay: float
+        parameter for reducing epsilon over time
+    lr_step_size: int
+        parameter for reducing learning rate over time
+    lr_gamma: float
+        parameter for reducing learning rate over time
+
+    Methods
+    -------
+    schedule_hyperparameters():
+        adjusts hyperparameter values over time
+    '''
 
     def __init__(self,
         action_space: gym.Space,
@@ -176,11 +309,62 @@ class LinearAgent(Agent):
         self.scheduler = StepLR(self.model_optim, step_size=lr_step_size, gamma=lr_gamma)
    
     def schedule_hyperparameters(self, timestep, max_timestep):
+        '''
+        Adjusts values of hyperparameters over time
+        
+        Parameters
+        ----------
+        timestep: int
+            current timestep
+        max_timestep: int
+            max timestep
+        '''
+        
         # reducing epsilon over time
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
 class FQIAgent():
+
+    '''
+    A class that represents the Reinforcement Learning agent used for all models implemented under the Fitted-Q Iteration framework.
+    
+    Attributes
+    ----------
+    action_space: gym.Space
+        action space from Gym
+    observation_space: gym.Space  
+        state space from Gym
+    gamma: float
+        parameter of the Markov Decision Process
+    epsilon: float
+        exploration parameter
+    fa: function_approximators.model
+        function approximation model
+    max_deduct: float
+        parameter for reducing epsilon over time
+    decay: float
+        parameter for reducing epsilon over time
+    update_freq: int
+        parameter of the FQI framework
+    model_save_freq: int
+        parameter of the FQI framework
+    model_save_capacity: int
+        parameter of the FQI framework
+    model_params: list
+        function approximation model parameters
+
+    Methods
+    -------
+    schedule_hyperparameters():
+        adjusts hyperparameter values over time
+    act():
+        Returns an action given a state (observation) of the environment.
+    update():
+        Updates model given a batch of (state, action, next_state, reward, done) tuples
+    initial_fit():
+        Initialises function approximation model
+    '''
     
     def __init__(self,
         action_space: gym.Space,
@@ -233,6 +417,22 @@ class FQIAgent():
         return np.sum(out, 0)
 
     def act(self, obs, explore):
+        '''
+        Takes as input an environment observation and returns an action.
+        
+        Parameters
+        ----------
+        obs: object
+            represents an environment state
+        explore: bool
+            determines whether exploration happens
+        
+        Returns
+        -------
+        action: object
+            represents an environment action
+        '''
+            
         if (explore and np.random.random_sample() < self.epsilon) or (not self.fitted):
             action = self.action_space.sample()
         else:   
@@ -245,6 +445,15 @@ class FQIAgent():
         return action
 
     def update(self, batch):
+        '''
+        Takes as input a batch of tuples and updates the model parameters
+        
+        Parameters
+        ----------
+        batch: collections.namedtuple
+            batch of (state, action, next_state, reward, done) tuples
+        '''
+        
         self.step_counter += 1
         
         if self.step_counter % self.update_freq == 0:
@@ -272,6 +481,7 @@ class FQIAgent():
         else:
             pass
 
+    
     def initial_fit(self, batch):
         inputs = np.concatenate([batch.states, [self.encoded_actions[int(i.item())] for i in batch.actions]], -1)
         outputs = np.array(batch.rewards).reshape(-1)
@@ -279,10 +489,52 @@ class FQIAgent():
         self.fitted = True
 
     def schedule_hyperparameters(self, timestep, max_timestep):
+        '''
+        Adjusts values of hyperparameters over time
+        
+        Parameters
+        ----------
+        timestep: int
+            current timestep
+        max_timestep: int
+            max timestep
+        '''
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
 
 
 class OnlineGaussianProccessAgent():
+    
+    '''
+    A class that represents the Reinforcement Learning agent used for the Online Gaussian Process model.
+    
+    Attributes
+    ----------
+    action_space: gym.Space
+        action space from Gym
+    observation_space: gym.Space  
+        state space from Gym
+    gamma: float
+        parameter of the Markov Decision Process
+    epsilon: float
+        exploration parameter
+    fa: function_approximators.model
+        function approximation model
+    max_deduct: float
+        parameter for reducing epsilon over time
+    decay: float
+        parameter for reducing epsilon over time
+    model_params: list
+        function approximation model parameters
+
+    Methods
+    -------
+    schedule_hyperparameters():
+        adjusts hyperparameter values over time
+    act():
+        Returns an action given a state (observation) of the environment.
+    update():
+        Updates model given a batch of (state, action, next_state, reward, done) tuples
+    '''
     
     def __init__(self,
         action_space: gym.Space,
@@ -323,7 +575,22 @@ class OnlineGaussianProccessAgent():
         length = self.action_space.n
         return [self._one_hot(length, i) for i in range(length)] 
 
-    def act(self, obs, explore):
+    def act(self, obs, explore):     
+        '''
+        Takes as input an environment observation and returns an action.
+        
+        Parameters
+        ----------
+        obs: object
+            represents an environment state
+        explore: bool
+            determines whether exploration happens
+        
+        Returns
+        -------
+        action: object
+            represents an environment action
+        '''
 
         if (explore and np.random.random_sample() < self.epsilon):
             action = self.action_space.sample()
@@ -333,6 +600,22 @@ class OnlineGaussianProccessAgent():
         return action 
     
     def update(self, obs, next_obs, reward, action, done):
+        '''
+        Takes as input a batch of tuples and updates the model parameters
+        
+        Parameters
+        ----------
+        obs: object
+            environment state
+        next_obs: object
+            environment next state
+        reward: float
+            reward
+        action: object
+            action
+        done: bool
+            whether the environment should be reset
+        '''
         
         q_values = [self.model.predict(self.X, np.concatenate([next_obs, self.encoded_actions[i]],-1).reshape(1,-1), return_sigma=True) for i in range(self.action_space.n)]
         Q = [q[0] + 2*q[1] for q in q_values]
@@ -347,4 +630,14 @@ class OnlineGaussianProccessAgent():
             self.X = np.vstack([self.X, x])
 
     def schedule_hyperparameters(self, timestep, max_timestep):
+        '''
+        Adjusts values of hyperparameters over time
+        
+        Parameters
+        ----------
+        timestep: int
+            current timestep
+        max_timestep: int
+            max timestep
+        '''
         self.epsilon = 1.0 - (min(1.0, timestep/(self.decay * max_timestep))) * self.max_deduct
