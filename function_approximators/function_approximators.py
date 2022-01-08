@@ -20,12 +20,16 @@ class ParametricModel(nn.Module):
     -------
     hard_update():
         Updates target model with current model's parameters
+    
     '''
     def __init__(self):
         super().__init__()
 
     def hard_update(self, target_net):
+        '''
+        Updates target model with current model's parameters
         
+        '''
         for param, target_param in zip(self.parameters(), target_net.parameters()):
             param.data.copy_(target_param.data)
 
