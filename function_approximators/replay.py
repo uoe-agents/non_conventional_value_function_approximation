@@ -9,7 +9,30 @@ Transition = namedtuple(
 )
 
 class ReplayBuffer:
+    '''
+    Represents a buffer that can be used to store and sample (state, action, next_state, reward, done) tuples from past environment interactions.
+    
+    Attributes
+    ----------
+    capacity: int
+        replay buffer capacity
+    memory: collections.namedtuple  
+        stored transition tuples
+    count: int
+        number of stored transitions
+    threshold: float
+        threshold for adding a new example in the buffer
 
+    Methods
+    -------
+    init_memory():
+        Initialises replay buffer memory.
+    push():
+        Stores a given transition in the replay buffer.
+    sample():
+        Returns a batch of transitions from the replay buffer
+    
+    '''
     def __init__(self, capacity, threshold=0):
 
         self.capacity = capacity
@@ -23,7 +46,15 @@ class ReplayBuffer:
         return min(self.count, self.capacity)
 
     def init_memory(self, transition):
-
+        '''
+        Initialises the replay buffer.
+        
+        Parameters
+        ----------
+        trasition: collections.namedtuple
+            represents an environment transition
+        
+        '''  
         self.memory = Transition(
             *[np.zeros([self.capacity, elem.size], dtype=elem.dtype) for elem in transition]
         )
@@ -31,7 +62,15 @@ class ReplayBuffer:
         self.matrix = np.zeros((1, self.m))
 
     def push(self, *args):
+        '''
+        Stores a transition in the replay buffer memory
+        
+        Parameters
+        ----------
+        *args
+            represent an environment transition in the form (state, action, next_state, reward, done)
 
+        '''  
         # create namedTuple
         transition = Transition(*args)
         
@@ -68,7 +107,20 @@ class ReplayBuffer:
                 self.count += 1
 
     def sample(self, batch_size, device = "cpu"):
+        '''
+        Returns a batch of transitions from the replay buffer.
+        
+        Parameters
+        ----------
+        batch_size: int
+            batch size
 
+        Returns
+        -------
+        batch: collections.namedtuple
+            batch of transitions
+        
+        '''  
         indices = np.random.randint(0, high=len(self), size=batch_size)
 
         batch = Transition(
