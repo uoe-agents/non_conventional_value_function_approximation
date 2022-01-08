@@ -23,8 +23,8 @@ This project evaluates and compares different approaches to function approximati
   2. Reliability
   3. Sample efficiency
   4. Training time
-  5. Interpretability<br/>
-
+  5. Interpretability
+<br/>
 
 ## Getting started
 
@@ -51,7 +51,7 @@ pip install -e .
 ## Project
 
 https://github.com/atsiakkas/rl_vfa<br/>
-
+<br/>
 
 
 ## Contents
@@ -69,7 +69,7 @@ https://github.com/atsiakkas/rl_vfa<br/>
 **train**: Scripts (jupyter notebooks and .py files) for training and evaluation.
 
 **utils**: Defines the training and plotting utility functions.<br/>
-
+<br/>
 
 
 ## Key references
