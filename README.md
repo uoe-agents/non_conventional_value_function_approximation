@@ -2,8 +2,8 @@
 
 This project evaluates and compares different approaches to function approximation in Reinforcement Learning.
 
-```
-```
+
+
 ## Getting started
 
 Create and activate virtual environment:
@@ -22,6 +22,7 @@ Install requirements:
 cd rl_vfa
 pip install -e .
 ```
+
 
 
 ## Project
@@ -45,6 +46,7 @@ https://github.com/atsiakkas/rl_vfa
 **train**: Scripts (jupyter notebooks and .py files) for training and evaluation.
 
 **utils**: Defines the training and plotting utility functions.
+
 
 
 ## Key references
