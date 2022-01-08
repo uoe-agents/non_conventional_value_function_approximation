@@ -8,6 +8,27 @@ import numpy as np
 
 
 class SimpleGridworldEnv(gym.Env):
+    '''
+    A Gym environment class that represents a simple gridworld.
+    
+    Attributes
+    ----------
+    action_space: gym.Space
+        action space from Gym
+    observation_space: gym.Space  
+        state space from Gym
+    height: int
+        height of the gridworld
+    width: int
+        width of the gridworld
+    
+    Methods
+    -------
+    step():
+        Returns an environment state given an action
+    reset():
+        Resets the environment
+    '''
     def __init__(self, height=5, width=5):
         self.height = height
         self.width = width
@@ -25,6 +46,19 @@ class SimpleGridworldEnv(gym.Env):
         self.reset()
 
     def _one_hot(self, sample):
+        '''
+        Returns a one hot vector 
+        
+        Parameters
+        ----------
+        sample: object
+            environment state in coordinate form
+        
+        Returns
+        -------
+        vector: np.array
+            one hot vector in list format
+        '''
         index = sample[0]*self.width + sample[1]
         features = np.zeros(self.height * self.width)
         features[index]=1
@@ -32,7 +66,19 @@ class SimpleGridworldEnv(gym.Env):
         return features
     
     def step(self, action):
-
+        '''
+        Takes as input an action and returns an environment state.
+        
+        Parameters
+        ----------
+        action: object
+            represents an environment action
+        
+        Returns
+        -------
+        next_state: object
+            represents an environment state (in one-hot vector form)
+        ''' 
         x, y = self.moves[action]
         self.S = self.S[0] + x, self.S[1] + y
 
@@ -46,11 +92,42 @@ class SimpleGridworldEnv(gym.Env):
             return self._one_hot(self.S), -1, False, {}
 
     def reset(self):
+        '''
+        Resets the environment.
+
+        Returns
+        -------
+        starting_state: object
+            represents the starting state of the environment (in one-hot vector form)
+        '''
         self.S = (3, 0)
         return self._one_hot(self.S)
 
 
 class WindyGridworldEnv(gym.Env):
+    '''
+    A Gym environment class that represents WindyGridworld.
+    
+    WindyGridworld reference: http://www.incompleteideas.net/book/the-book-2nd.html
+    
+    Attributes
+    ----------
+    action_space: gym.Space
+        action space from Gym
+    observation_space: gym.Space  
+        state space from Gym
+    height: int
+        height of the gridworld
+    width: int
+        width of the gridworld
+    
+    Methods
+    -------
+    step():
+        Returns an environment state given an action
+    reset():
+        Resets the environment
+    '''
     def __init__(self, height=7, width=10):
         self.height = height
         self.width = width
@@ -68,6 +145,19 @@ class WindyGridworldEnv(gym.Env):
         self.reset()
 
     def _one_hot(self, sample):
+        '''
+        Returns a one hot vector 
+        
+        Parameters
+        ----------
+        sample: object
+            environment state in coordinate form
+        
+        Returns
+        -------
+        vector: np.array
+            one hot vector in list format
+        '''
         index = sample[0]*self.width + sample[1]
         features = np.zeros(self.height * self.width)
         features[index]=1
@@ -75,6 +165,19 @@ class WindyGridworldEnv(gym.Env):
         return features
     
     def step(self, action):
+        '''
+        Takes as input an action and returns an environment state.
+        
+        Parameters
+        ----------
+        action: object
+            represents an environment action
+        
+        Returns
+        -------
+        next_state: object
+            represents an environment state (in one-hot vector form)
+        ''' 
         if self.S[1] in (3, 4, 5, 8):
             self.S = self.S[0] - 1, self.S[1]
         elif self.S[1] in (6, 7):
@@ -93,6 +196,14 @@ class WindyGridworldEnv(gym.Env):
             return self._one_hot(self.S), -1, False, {}
 
     def reset(self):
+        '''
+        Resets the environment.
+
+        Returns
+        -------
+        starting_state: object
+            represents the starting state of the environment (in one-hot vector form)
+        '''
         self.S = (3, 0)
         return self._one_hot(self.S)
 
