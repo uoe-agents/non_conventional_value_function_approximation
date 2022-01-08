@@ -20,11 +20,12 @@ This project evaluates and compares different approaches to function approximati
 
 ### Evaluation Criteria
   1. Performance
+  2. Reliability
   3. Sample efficiency
   4. Training time
   5. Interpretability
 
-
+//
 ## Getting started
 
 Create and activate virtual environment:
