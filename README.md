@@ -1,7 +1,28 @@
-# Non-conventional Function Approximation methods in Reinforcement Learning
+# Non-conventional Value Function Approximation methods in Reinforcement Learning
 
 This project evaluates and compares different approaches to function approximation in Reinforcement Learning.
 
+### Function approximation models evaluated
+  1. Neural Network
+  2. Linear Model
+  3. Decision Tree
+  4. Random Forest
+  5. Support Vector Regression
+  6. K-Nearest Neighbours Regression
+  7. Gaussian Processes
+  8. Online Gaussian Processes
+
+### Environments
+  1. SimpleGridworld
+  2. WindyGridworld
+  3. CartPole
+  4. LunarLander
+
+### Evaluation Criteria
+  1. Performance
+  3. Sample efficiency
+  4. Training time
+  5. Interpretability
 
 
 ## Getting started
