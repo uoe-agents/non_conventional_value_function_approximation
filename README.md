@@ -2,7 +2,8 @@
 
 This project evaluates and compares different approaches to function approximation in Reinforcement Learning.
 
-//
+```
+```
 ## Getting started
 
 Create and activate virtual environment:
