@@ -25,7 +25,7 @@ This project evaluates and compares different approaches to function approximati
   4. Training time
   5. Interpretability
 
-//
+<br/>
 ## Getting started
 
 Create and activate virtual environment:
@@ -46,13 +46,13 @@ pip install -e .
 ```
 
 
-
+<br/>
 ## Project
 
 https://github.com/atsiakkas/rl_vfa
 
 
-
+<br/>
 ## Contents
 
 **agents**: Defines the classes of the RL agents: DQNAgent, LinearAgent, FQIAgent, OnlineGaussianProcessAgent
@@ -70,7 +70,7 @@ https://github.com/atsiakkas/rl_vfa
 **utils**: Defines the training and plotting utility functions.
 
 
-
+<br/>
 ## Key references
 
 Reinforcement Learning algorithms: Richard S. Sutton and Andrew G. Barto. 2018. Reinforcement learning: An introduction. MIT press.
