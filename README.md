@@ -51,8 +51,7 @@ https://github.com/atsiakkas/rl_vfa
 
 ## Key references
 
-Reinforcement Learning algorithms: Richard S. Sutton and Andrew G. Barto. 2018. Reinforcement learning: An intro-
-duction. MIT press.
+Reinforcement Learning algorithms: Richard S. Sutton and Andrew G. Barto. 2018. Reinforcement learning: An introduction. MIT press.
 
 Fitted-Q Iteration: Damien Ernst, Pierre Geurts, and Louis Wehenkel. 2005. Tree-based batch mode
 reinforcement learning. Journal of Machine Learning Research 6 (2005).
