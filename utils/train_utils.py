@@ -69,14 +69,14 @@ def play_episode(
     episode_timesteps = 0
     episode_return = 0
  
-    ## Plays episode until termination (done=1)
+    # Plays episode until termination (done=1)
     while not done:
         # agent selects action
         action = agent.act(obs, explore=explore)
         # agent takes that action in the environment
         next_obs, reward, done, _ = env.step(action) 
         
-        ## if training, update model parameters
+        # if training, update model parameters
         if train and not online:  
             replay_buffer.push(
                 np.array(obs, dtype=np.float32),
@@ -154,7 +154,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
     ''' 
     timesteps_elapsed = 0
     
-    ## defines reinforcement learning agent and replay buffer
+    # defines reinforcement learning agent and replay buffer
     agent = agent(
         action_space = env.action_space, 
         observation_space = env.observation_space,
@@ -163,7 +163,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
     )
     replay_buffer = ReplayBuffer(config["buffer_capacity"], threshold)
 
-    ## initialises parameters
+    # initialises parameters
     eval_returns_all = []
     eval_times_all = []
 
@@ -175,7 +175,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
     
     with tqdm(total=config["max_timesteps"]) as pbar:
         
-        ## runs episodes until maximum number of timesteps is reached 
+        # runs episodes until maximum number of timesteps is reached 
         while timesteps_elapsed < config["max_timesteps"]:
             elapsed_seconds = time.time() - start_time
             
@@ -187,7 +187,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
             # updates values of hyperparameters
             agent.schedule_hyperparameters(timesteps_elapsed, config["max_timesteps"])
             
-            ## plays an episode
+            # plays an episode
             episode_timesteps, train_return, losses = play_episode(
                 env,
                 agent,
@@ -210,11 +210,11 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
             pbar.update(episode_timesteps)
             losses_all += losses   
 
-            ## evaluates current policy every certain number of timesteps
+            # evaluates current policy every certain number of timesteps
             if timesteps_elapsed % config["eval_freq"] < episode_timesteps:
                 eval_returns = 0
 
-                ## runs an evaluation episode a certain number of times
+                # runs an evaluation episode a certain number of times
                 for _ in range(config["eval_episodes"]):
                     episode_timesteps, episode_return, _ = play_episode(
                         env,
@@ -231,7 +231,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                     )
                     eval_returns += episode_return / config["eval_episodes"]
 
-                ## displays informative messages during training
+                # displays informative messages during training
                 if output:
                     pbar.write(
                         f"Evaluation at timestep {timesteps_elapsed} returned a mean returns of {eval_returns}"
@@ -244,7 +244,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                     if threshold > -1:
                         pbar.write(f"Replay Buffer count: {replay_buffer.count}")
                 
-                ## stores evaluation returns after each evaluation frame
+                # stores evaluation returns after each evaluation frame
                 eval_returns_all.append(eval_returns)
                 eval_times_all.append(time.time() - start_time)                  
        
@@ -284,7 +284,7 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
     '''
     timesteps_elapsed = 0
     
-    ## defines reinforcement learning agent and replay buffer
+    # defines reinforcement learning agent and replay buffer
     agent = agent(
         action_space = env.action_space, 
         observation_space = env.observation_space,
@@ -296,15 +296,15 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
     n_eps = 0
     start_time = time.time()
 
-    ## runs episodes until maximum number of timesteps has been reached
+    # runs episodes until maximum number of timesteps has been reached
     while timesteps_elapsed < config["max_timesteps"]:
         elapsed_seconds = time.time() - start_time
         
-        ## breaks if maximum time has elapsed
+        # breaks if maximum time has elapsed
         if elapsed_seconds > config["max_time"]:
             break
         
-        ## updates model hyperparameter values
+        # updates model hyperparameter values
         agent.schedule_hyperparameters(timesteps_elapsed, config["max_timesteps"])
         episode_timesteps, _, _ = play_episode(
             env,
@@ -324,7 +324,7 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
         n_eps += 1
         eval_returns = 0
         
-        ## runs an evaluation frame after each passed episode
+        # runs an evaluation frame after each passed episode
         for _ in range(config["eval_episodes"]):
             episode_timesteps, episode_return, _ = play_episode(
                 env,
@@ -341,7 +341,7 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
             )
             eval_returns += episode_return / config["eval_episodes"]
 
-        ## checks whether solving condition has been met
+        # checks whether solving condition has been met
         if op(eval_returns, target_return):
             n=0
             print(f"Ep. timesteps: {episode_timesteps}")
@@ -382,7 +382,7 @@ def train_time(env, config, fa, agent, online=False, threshold=-1):
     start_time = time.time() 
     timesteps_elapsed = 0
     
-    ## defines reinforcement learning agent and replay buffer
+    # defines reinforcement learning agent and replay buffer
     agent = agent(
         action_space = env.action_space, 
         observation_space = env.observation_space,
@@ -393,13 +393,13 @@ def train_time(env, config, fa, agent, online=False, threshold=-1):
    
     with tqdm(total=config["max_timesteps"]) as pbar:
     
-        ## runs episodes until the maximum number of timesteps is reached
+        # runs episodes until the maximum number of timesteps is reached
         while timesteps_elapsed < config["max_timesteps"]:
             
-            ## updates hyperparameter values
+            # updates hyperparameter values
             agent.schedule_hyperparameters(timesteps_elapsed, config["max_timesteps"])
             
-            ## plays an episode
+            # plays an episode
             episode_timesteps, episode_returns, _ = play_episode(
                 env,
                 agent,
@@ -417,7 +417,7 @@ def train_time(env, config, fa, agent, online=False, threshold=-1):
             pbar.update(episode_timesteps)
             
             timesteps_elapsed += episode_timesteps
-            ## measures elapsed time
+            # measures elapsed time
             elapsed_seconds = time.time() - start_time
     
     print(episode_returns)
