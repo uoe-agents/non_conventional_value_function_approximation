@@ -47,6 +47,25 @@ pip install -e .
 <br/>
 
 
+## Running experiments
+
+To experiment with the provided algorithm:
+1. Use one of the jupyter notebooks in the train folder
+2. Define the environment you want to use
+3. Select function approximation model
+4. Adjust values of hyperparameters
+5. Train and evaluate
+
+To replicate results of our experiments:
+1. Choose one of the environments we evaluated
+2. Train the algorithm
+
+```
+python train/[env]_train.py
+```
+<br/>
+
+
 
 ## Project
 
