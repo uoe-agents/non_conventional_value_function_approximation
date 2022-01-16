@@ -111,7 +111,6 @@ class Agent(ABC):
         Q_next = self.target_model(batch.next_states)
         # obtain the target value: maximum action value over next states action values
         q_target = (1-batch.done) * Q_next.max(1)[0].unsqueeze(1)
-        # calculate the value of y
         y = batch.rewards + self.gamma * q_target
         
         # calculate the mse loss between y and q_current
@@ -124,7 +123,6 @@ class Agent(ABC):
         # perform an optimisation step of the parameters of the critic network
         self.model_optim.step()  
         self.scheduler.step() 
-        # increase update counter
         self.update_counter += 1
 
         # check for update condition
