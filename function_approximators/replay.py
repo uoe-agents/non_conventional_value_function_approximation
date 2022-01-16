@@ -51,7 +51,7 @@ class ReplayBuffer:
         
         Parameters
         ----------
-        trasition: collections.namedtuple
+        transition: collections.namedtuple
             represents an environment transition
         
         '''  
