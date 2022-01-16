@@ -49,7 +49,7 @@ pip install -e .
 
 ## Running experiments
 
-To experiment with the provided algorithm:
+To experiment with any of the implemented algorithms:
 1. Use one of the jupyter notebooks in the train folder
 2. Define the environment you want to use
 3. Select function approximation model
