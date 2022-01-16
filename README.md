@@ -65,7 +65,7 @@ python train/[env]_train.py
 ```
 --> This will save the evaluation results (on performance, training times and sample efficiency) in csv files
 <br/>
-
+<br/>
 
 
 ## Project
