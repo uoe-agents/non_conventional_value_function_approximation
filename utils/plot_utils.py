@@ -8,15 +8,23 @@ import seaborn as sns
 import matplotlib
 
 def plot_returns(save_name: str, values: list, lower: list, upper: list, colours: list, xlabel: str, ylabel: str, legend_names: list, tick_freq:int, eval_freq: int, markers: list, legend_outside=False):
-    """
+    '''
     Plot values with respect to timesteps
     
-    :param values (np.ndarray): numpy array of values to plot as y values
-    :param std (np.ndarray): numpy array of stds of y values to plot as shading
-    :param xlabel (str): label of x-axis
-    :param ylabel (str): label of y-axis
-    :param legend_name (str): name of algorithm
-    """
+    Parameters
+    ----------
+    values: np.ndarray 
+        numpy array of values to plot as y values
+    std: np.ndarray) 
+        numpy array of stds of y values to plot as shading
+    xlabel: str 
+        label of x-axis
+    ylabel: str
+        label of y-axis
+    legend_name: str
+        name of algorithm
+    
+    '''
     x_values = eval_freq + np.arange(len(values[0])) * eval_freq
     plt.figure(figsize=(8,5))
     plt.rc('font', size=13)
@@ -51,18 +59,18 @@ def plot_heatmap(data, row_labels, col_labels, ax=None,
 
     Parameters
     ----------
-    data
+    data: np.array
         A 2D numpy array of shape (N, M).
-    row_labels
+    row_labels: list
         A list or array of length N with the labels for the rows.
-    col_labels
+    col_labels: list
         A list or array of length M with the labels for the columns.
-    ax
+    ax: matplotlib.axes.Axes
         A `matplotlib.axes.Axes` instance to which the heatmap is plotted.  If
         not provided, use current axes or create a new one.  Optional.
-    cbar_kw
+    cbar_kw: dict
         A dictionary with arguments to `matplotlib.Figure.colorbar`.  Optional.
-    cbarlabel
+    cbarlabel: str
         The label for the colorbar.  Optional.
     **kwargs
         All other arguments are forwarded to `imshow`.
