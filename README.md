@@ -94,15 +94,15 @@ https://github.com/atsiakkas/rl_vfa<br/>
 
 ## Key references
 
-Reinforcement Learning algorithms: Richard S. Sutton and Andrew G. Barto. 2018. Reinforcement learning: An introduction. MIT press.
+**Reinforcement Learning algorithms**: Richard S. Sutton and Andrew G. Barto. 2018. Reinforcement learning: An introduction. MIT press.
 
-Fitted-Q Iteration: Damien Ernst, Pierre Geurts, and Louis Wehenkel. 2005. Tree-based batch mode
+**Fitted-Q Iteration**: Damien Ernst, Pierre Geurts, and Louis Wehenkel. 2005. Tree-based batch mode
 reinforcement learning. Journal of Machine Learning Research 6 (2005).
 
-Online Gaussian Process: Lehel Csató and Manfred Opper. 2002. Sparse on-line Gaussian processes. Neural
+**Online Gaussian Process**: Lehel Csató and Manfred Opper. 2002. Sparse on-line Gaussian processes. Neural
 computation 14, 3 (2002), 641–668.
 
-Deep Q-Network: Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A. Rusu, Joel Veness,
+**Deep Q-Network**: Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A. Rusu, Joel Veness,
 Marc G. Bellemare, Alex Graves, Martin Riedmiller, Andreas K. Fidjeland, Georg
 Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Ioannis Antonoglou, Helen
 King, Dharshan Kumaran, Daan Wierstra, Shane Legg, and Demis Hassabis. 2015.
