@@ -58,12 +58,12 @@ To experiment with any of the implemented algorithms:
 
 To replicate results of our experiments:
 1. Choose one of the environments we evaluated
-2. Train the algorithm by:
+2. Train and evaluate all algorithms by running:
 
 ```
 python train/[env]_train.py
 ```
---> This will train and evaluate the chosen algorithm and save the results in csv files
+--> This will save the evaluation results (on performance, training times and sample efficiency) in csv files
 <br/>
 
 
