@@ -58,11 +58,12 @@ To experiment with any of the implemented algorithms:
 
 To replicate results of our experiments:
 1. Choose one of the environments we evaluated
-2. Train the algorithm
+2. Train the algorithm by:
 
 ```
 python train/[env]_train.py
 ```
+--> This will train and evaluate the chosen algorithm and save the results in csv files
 <br/>
 
 
