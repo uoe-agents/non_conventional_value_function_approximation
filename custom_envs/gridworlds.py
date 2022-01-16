@@ -76,8 +76,8 @@ class SimpleGridworldEnv(gym.Env):
         
         Returns
         -------
-        next_state: object
-            represents an environment state (in one-hot vector form)
+        next_observation: tuple
+            a tuple consisting of the next_state (in one-hot vector form), reward (always equals -1) and done (boolean value representing whether episode terminates) of the environment
         ''' 
         x, y = self.moves[action]
         self.S = self.S[0] + x, self.S[1] + y
@@ -175,8 +175,8 @@ class WindyGridworldEnv(gym.Env):
         
         Returns
         -------
-        next_state: object
-            represents an environment state (in one-hot vector form)
+        next_observation: tuple
+            a tuple consisting of the next_state (in one-hot vector form), reward (always equals -1) and done (boolean value representing whether episode terminates) of the environment
         ''' 
         if self.S[1] in (3, 4, 5, 8):
             self.S = self.S[0] - 1, self.S[1]
